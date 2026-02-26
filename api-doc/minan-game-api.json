@@ -1,0 +1,1078 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "谜男迷宫游戏 API",
+    "description": "谜男迷宫游戏的后端 API 接口文档",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "本地开发环境"
+    }
+  ],
+  "paths": {
+    "/levels/list": {
+      "get": {
+        "summary": "获取所有关卡列表",
+        "tags": ["关卡管理"],
+        "responses": {
+          "200": {
+            "description": "成功获取关卡列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels/getDetail": {
+      "get": {
+        "summary": "根据ID获取关卡详情",
+        "tags": ["关卡管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取关卡详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels/getByLevelId": {
+      "get": {
+        "summary": "根据关卡ID获取关卡详情",
+        "tags": ["关卡管理"],
+        "parameters": [
+          {
+            "name": "levelId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取关卡详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels/add": {
+      "post": {
+        "summary": "新增关卡",
+        "tags": ["关卡管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Level"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功新增关卡",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels/update": {
+      "post": {
+        "summary": "更新关卡",
+        "tags": ["关卡管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Level"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功更新关卡",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels/delete": {
+      "post": {
+        "summary": "删除关卡",
+        "tags": ["关卡管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除关卡",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/levels/deleteByLevelId": {
+      "post": {
+        "summary": "根据关卡ID删除关卡",
+        "tags": ["关卡管理"],
+        "parameters": [
+          {
+            "name": "levelId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除关卡",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/list": {
+      "get": {
+        "summary": "获取所有场景列表",
+        "tags": ["场景管理"],
+        "responses": {
+          "200": {
+            "description": "成功获取场景列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/listByLevelId": {
+      "get": {
+        "summary": "根据关卡ID获取场景列表",
+        "tags": ["场景管理"],
+        "parameters": [
+          {
+            "name": "levelId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取场景列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/getDetail": {
+      "get": {
+        "summary": "根据ID获取场景详情",
+        "tags": ["场景管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取场景详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/getBySceneId": {
+      "get": {
+        "summary": "根据场景ID获取场景详情",
+        "tags": ["场景管理"],
+        "parameters": [
+          {
+            "name": "sceneId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取场景详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/add": {
+      "post": {
+        "summary": "新增场景",
+        "tags": ["场景管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scene"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功新增场景",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/update": {
+      "post": {
+        "summary": "更新场景",
+        "tags": ["场景管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Scene"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功更新场景",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/delete": {
+      "post": {
+        "summary": "删除场景",
+        "tags": ["场景管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除场景",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/deleteBySceneId": {
+      "post": {
+        "summary": "根据场景ID删除场景",
+        "tags": ["场景管理"],
+        "parameters": [
+          {
+            "name": "sceneId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除场景",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scenes/deleteByLevelId": {
+      "post": {
+        "summary": "根据关卡ID删除场景",
+        "tags": ["场景管理"],
+        "parameters": [
+          {
+            "name": "levelId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除场景",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/list": {
+      "get": {
+        "summary": "获取所有提示词列表",
+        "tags": ["提示词管理"],
+        "responses": {
+          "200": {
+            "description": "成功获取提示词列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/listBySceneId": {
+      "get": {
+        "summary": "根据场景ID获取提示词列表",
+        "tags": ["提示词管理"],
+        "parameters": [
+          {
+            "name": "sceneId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取提示词列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/getDetail": {
+      "get": {
+        "summary": "根据ID获取提示词详情",
+        "tags": ["提示词管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取提示词详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/getByPromptId": {
+      "get": {
+        "summary": "根据提示词ID获取提示词详情",
+        "tags": ["提示词管理"],
+        "parameters": [
+          {
+            "name": "promptId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取提示词详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/add": {
+      "post": {
+        "summary": "新增提示词",
+        "tags": ["提示词管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prompt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功新增提示词",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/update": {
+      "post": {
+        "summary": "更新提示词",
+        "tags": ["提示词管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Prompt"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功更新提示词",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/delete": {
+      "post": {
+        "summary": "删除提示词",
+        "tags": ["提示词管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除提示词",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/deleteByPromptId": {
+      "post": {
+        "summary": "根据提示词ID删除提示词",
+        "tags": ["提示词管理"],
+        "parameters": [
+          {
+            "name": "promptId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除提示词",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prompts/deleteBySceneId": {
+      "post": {
+        "summary": "根据场景ID删除提示词",
+        "tags": ["提示词管理"],
+        "parameters": [
+          {
+            "name": "sceneId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除提示词",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/list": {
+      "get": {
+        "summary": "获取所有成就列表",
+        "tags": ["成就管理"],
+        "responses": {
+          "200": {
+            "description": "成功获取成就列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/getDetail": {
+      "get": {
+        "summary": "根据ID获取成就详情",
+        "tags": ["成就管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取成就详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/getByAchievementId": {
+      "get": {
+        "summary": "根据成就ID获取成就详情",
+        "tags": ["成就管理"],
+        "parameters": [
+          {
+            "name": "achievementId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功获取成就详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/add": {
+      "post": {
+        "summary": "新增成就",
+        "tags": ["成就管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Achievement"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功新增成就",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/update": {
+      "post": {
+        "summary": "更新成就",
+        "tags": ["成就管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Achievement"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功更新成就",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/delete": {
+      "post": {
+        "summary": "删除成就",
+        "tags": ["成就管理"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除成就",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/achievements/deleteByAchievementId": {
+      "post": {
+        "summary": "根据成就ID删除成就",
+        "tags": ["成就管理"],
+        "parameters": [
+          {
+            "name": "achievementId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功删除成就",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Response": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "响应码，0表示成功，非0表示失败"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应消息"
+          },
+          "data": {
+            "type": "object",
+            "description": "响应数据"
+          }
+        }
+      },
+      "Level": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "关卡ID"
+          },
+          "levelId": {
+            "type": "string",
+            "description": "关卡唯一标识符"
+          },
+          "name": {
+            "type": "string",
+            "description": "关卡名称"
+          },
+          "order": {
+            "type": "integer",
+            "description": "关卡顺序"
+          },
+          "description": {
+            "type": "string",
+            "description": "关卡描述"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Scene": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "场景ID"
+          },
+          "sceneId": {
+            "type": "string",
+            "description": "场景唯一标识符"
+          },
+          "levelId": {
+            "type": "string",
+            "description": "关联的关卡ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "场景名称"
+          },
+          "order": {
+            "type": "integer",
+            "description": "场景顺序"
+          },
+          "background": {
+            "type": "string",
+            "description": "场景背景"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "场景图片URL"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "description": "场景缩略图URL"
+          },
+          "technique": {
+            "type": "string",
+            "description": "知识点名称"
+          },
+          "coreConcept": {
+            "type": "string",
+            "description": "知识点核心概念"
+          },
+          "maxScore": {
+            "type": "number",
+            "format": "double",
+            "description": "场景满分"
+          },
+          "isActive": {
+            "type": "integer",
+            "description": "是否激活"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Prompt": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "提示词ID"
+          },
+          "promptId": {
+            "type": "string",
+            "description": "提示词唯一标识符"
+          },
+          "sceneId": {
+            "type": "string",
+            "description": "关联的场景ID"
+          },
+          "template": {
+            "type": "string",
+            "description": "提示词模板"
+          },
+          "evaluationDimensions": {
+            "type": "string",
+            "description": "评估维度（JSON格式）"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "Achievement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "成就ID"
+          },
+          "achievementId": {
+            "type": "string",
+            "description": "成就唯一标识符"
+          },
+          "name": {
+            "type": "string",
+            "description": "成就名称"
+          },
+          "description": {
+            "type": "string",
+            "description": "成就描述"
+          },
+          "condition": {
+            "type": "string",
+            "description": "触发条件（JSON格式）"
+          },
+          "iconUrl": {
+            "type": "string",
+            "description": "成就图标URL"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      }
+    }
+  }
+}

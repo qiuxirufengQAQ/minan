@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.minan.game.mapper.KnowledgeQuizMapper">
+
+    <resultMap id="KnowledgeQuizResultMap" type="com.minan.game.model.KnowledgeQuiz" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="quizId" column="quiz_id"/>
+        <result property="pointId" column="point_id"/>
+        <result property="question" column="question"/>
+        <result property="options" column="options" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="correctAnswer" column="correct_answer"/>
+        <result property="explanation" column="explanation"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="order" column="order"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="pointName" column="point_name"/>
+    </resultMap>
+
+    <select id="selectByPointId" resultMap="KnowledgeQuizResultMap">
+        SELECT kq.*, kp.name as point_name 
+        FROM knowledge_quiz kq 
+        LEFT JOIN knowledge_point kp ON kq.point_id = kp.point_id 
+        WHERE kq.point_id = #{pointId} 
+        ORDER BY kq.`order`
+    </select>
+
+    <select id="selectAllWithPointName" resultMap="KnowledgeQuizResultMap">
+        SELECT kq.*, kp.name as point_name 
+        FROM knowledge_quiz kq 
+        LEFT JOIN knowledge_point kp ON kq.point_id = kp.point_id 
+        ORDER BY kq.`order`
+    </select>
+
+    <select id="selectPageWithPointName" resultMap="KnowledgeQuizResultMap">
+        SELECT kq.*, kp.name as point_name 
+        FROM knowledge_quiz kq 
+        LEFT JOIN knowledge_point kp ON kq.point_id = kp.point_id 
+        <where>
+            <if test="pointId != null and pointId != ''">
+                AND kq.point_id = #{pointId}
+            </if>
+        </where>
+        ORDER BY kq.`order`
+    </select>
+
+</mapper>

@@ -1,0 +1,130 @@
+# 编辑器配置文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 前端项目忽略规则
+minan-admin/node_modules/
+minan-admin/dist/
+minan-admin/build/
+minan-admin/.env*
+minan-admin/*.local
+minan-admin/npm-debug.log*
+minan-admin/yarn-debug.log*
+minan-admin/yarn-error.log*
+minan-admin/pnpm-debug.log*
+minan-admin/lerna-debug.log*
+minan-admin/.cache/
+minan-admin/.parcel-cache/
+minan-admin/.next/
+minan-admin/out/
+minan-admin/build-ssr/
+minan-admin/.nuxt/
+minan-admin/dist-ssr/
+minan-admin/*.local
+
+minan-frontend/node_modules/
+minan-frontend/dist/
+minan-frontend/build/
+minan-frontend/.env*
+minan-frontend/*.local
+minan-frontend/npm-debug.log*
+minan-frontend/yarn-debug.log*
+minan-frontend/yarn-error.log*
+minan-frontend/pnpm-debug.log*
+minan-frontend/lerna-debug.log*
+minan-frontend/.cache/
+minan-frontend/.parcel-cache/
+minan-frontend/.next/
+minan-frontend/out/
+minan-frontend/build-ssr/
+minan-frontend/.nuxt/
+minan-frontend/dist-ssr/
+minan-frontend/*.local
+
+# 前端非代码资源
+minan-admin/public/uploads/
+minan-frontend/public/uploads/
+minan-admin/src/assets/uploads/
+minan-frontend/src/assets/uploads/
+
+# 后端项目忽略规则
+minan-backend/target/
+minan-backend/.mvn/
+minan-backend/mvnw
+minan-backend/mvnw.cmd
+minan-backend/.gradle/
+minan-backend/gradle/
+minan-backend/gradlew
+minan-backend/gradlew.bat
+minan-backend/build/
+minan-backend/*.iml
+minan-backend/.idea/
+
+# 后端上传的文件夹
+minan-backend/src/main/resources/static/uploads/
+minan-backend/upload/
+minan-backend/uploads/
+
+# 日志文件
+logs/
+*.log
+log4j.xml
+log4j.properties
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 其他临时文件
+*.tmp
+*.temp
+.cache/
+.temp/
+.tmp/
+
+# API文档生成的文件
+api-doc/generated/
+
+# 测试覆盖率报告
+coverage/
+.nyc_output/
+
+# 类型定义文件
+*.d.ts
+
+# 打包文件
+*.zip
+*.tar.gz
+*.tar.bz2
+*.7z
+
+# 操作系统相关文件
+Thumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# 构建工具文件
+Gruntfile.js
+gulpfile.js
+webpack.config.js
+rollup.config.js
+vite.config.js

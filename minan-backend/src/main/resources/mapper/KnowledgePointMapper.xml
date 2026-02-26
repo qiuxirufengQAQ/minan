@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.minan.game.mapper.KnowledgePointMapper">
+
+    <resultMap id="KnowledgePointResultMap" type="com.minan.game.model.KnowledgePoint" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="pointId" column="point_id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="name" column="name"/>
+        <result property="description" column="description"/>
+        <result property="coreConcept" column="core_concept"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="importance" column="importance"/>
+        <result property="prerequisites" column="prerequisites" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="tags" column="tags" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="iconUrl" column="icon_url"/>
+        <result property="order" column="order"/>
+        <result property="isActive" column="is_active"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="categoryName" column="category_name"/>
+    </resultMap>
+
+    <select id="selectByCategoryId" resultMap="KnowledgePointResultMap">
+        SELECT kp.*, kc.name as category_name 
+        FROM knowledge_point kp 
+        LEFT JOIN knowledge_category kc ON kp.category_id = kc.category_id 
+        WHERE kp.category_id = #{categoryId} 
+        ORDER BY kp.`order`
+    </select>
+
+    <select id="selectAllWithCategoryName" resultMap="KnowledgePointResultMap">
+        SELECT kp.*, kc.name as category_name 
+        FROM knowledge_point kp 
+        LEFT JOIN knowledge_category kc ON kp.category_id = kc.category_id 
+        ORDER BY kp.`order`
+    </select>
+
+    <select id="selectByIdWithCategoryName" resultMap="KnowledgePointResultMap">
+        SELECT kp.*, kc.name as category_name 
+        FROM knowledge_point kp 
+        LEFT JOIN knowledge_category kc ON kp.category_id = kc.category_id 
+        WHERE kp.point_id = #{pointId}
+    </select>
+
+    <select id="selectPageWithCategoryName" resultMap="KnowledgePointResultMap">
+        SELECT kp.*, kc.name as category_name 
+        FROM knowledge_point kp 
+        LEFT JOIN knowledge_category kc ON kp.category_id = kc.category_id 
+        <where>
+            <if test="categoryId != null and categoryId != ''">
+                AND kp.category_id = #{categoryId}
+            </if>
+            <if test="difficulty != null">
+                AND kp.difficulty = #{difficulty}
+            </if>
+        </where>
+        ORDER BY kp.`order`
+    </select>
+
+</mapper>
