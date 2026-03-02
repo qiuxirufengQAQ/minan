@@ -75,12 +75,18 @@ public class AchievementController {
      * 删除成就
      */
     @PostMapping("/delete")
-    public Response<Boolean> deleteAchievement(@RequestParam Long id) {
-        boolean success = achievementService.deleteAchievement(id);
+    public Response<Boolean> deleteAchievement(@RequestBody IdRequest request) {
+        boolean success = achievementService.deleteAchievement(request.getId());
         if (!success) {
             return Response.error("删除成就失败");
         }
         return Response.success(true);
+    }
+    
+    public static class IdRequest {
+        private Long id;
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
     }
 
     /**

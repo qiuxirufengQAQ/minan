@@ -39,7 +39,6 @@ public class KnowledgePointService {
 
     public boolean add(KnowledgePoint point) {
         point.setPointId(IdGenerator.generatePointId());
-        point.setIsActive(1);
         return pointMapper.insert(point) > 0;
     }
 

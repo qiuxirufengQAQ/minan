@@ -34,7 +34,7 @@ public class Scene {
 
     private String dialogueExample;
 
-    private String hint;
+    private String hintIds;
 
     private Integer difficulty;
 

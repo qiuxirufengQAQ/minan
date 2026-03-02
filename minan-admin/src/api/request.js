@@ -1,13 +1,16 @@
 import axios from 'axios'
+import config from '@/config'
 
 const getBaseURL = () => {
   const hostname = window.location.hostname
   const protocol = window.location.protocol
   const port = window.location.port
-  
+
+  // 开发环境使用配置中的API地址
   if (port === '3000' || port === '3001' || port === '3002' || port === '5173') {
-    return `${protocol}//${hostname}:8080/api`
+    return config.server.apiUrl
   }
+  // 生产环境使用相对路径
   return '/api'
 }
 

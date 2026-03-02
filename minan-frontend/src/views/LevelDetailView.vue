@@ -12,6 +12,27 @@
         <a-spin :spinning="loading">
           <a-card class="level-info">
             <p>{{ level?.description }}</p>
+            <div class="level-details">
+              <div class="detail-item">
+                <span class="detail-label">理论对应：</span>
+                <span>{{ level?.theory || '无' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">难度等级：</span>
+                <span class="difficulty-stars">
+                  {{ '⭐'.repeat(level?.difficulty || 1) }}
+                  {{ '☆'.repeat(5 - (level?.difficulty || 1)) }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">预计时长：</span>
+                <span>{{ level?.estimatedTime || 30 }}分钟</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">CP奖励：</span>
+                <span>{{ level?.cpRangeMin || 0 }}-{{ level?.cpRangeMax || 0 }}</span>
+              </div>
+            </div>
           </a-card>
           <div class="scenes-list">
             <a-card
@@ -25,6 +46,23 @@
                 <img :src="getSceneImageUrl(scene)" :alt="scene?.name" />
               </template>
               <a-card-meta :title="scene?.name" :description="scene?.technique" />
+              <div class="scene-meta">
+                <div class="meta-item">
+                  <span class="meta-label">难度：</span>
+                  <span class="difficulty-stars">
+                    {{ '⭐'.repeat(scene?.difficulty || 1) }}
+                    {{ '☆'.repeat(5 - (scene?.difficulty || 1)) }}
+                  </span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">时长：</span>
+                  <span>{{ scene?.estimatedTime || 10 }}分钟</span>
+                </div>
+                <div class="meta-item" v-if="scene?.requiredIntimacyScore > 0">
+                  <span class="meta-label">所需亲密度：</span>
+                  <span>{{ scene?.requiredIntimacyScore }}💕</span>
+                </div>
+              </div>
             </a-card>
           </div>
         </a-spin>
@@ -141,6 +179,56 @@ export default {
 
 .level-info {
   margin-bottom: 30px;
+}
+
+.level-details {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.detail-item {
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #999;
+  white-space: nowrap;
+}
+
+.difficulty-stars {
+  letter-spacing: 2px;
+}
+
+.scene-meta {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta-label {
+  font-weight: 500;
+  color: #999;
+  white-space: nowrap;
 }
 
 .scenes-list {

@@ -80,7 +80,11 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="知识点">
-              <a-input v-model:value="editForm.technique" placeholder="请输入知识点" />
+              <a-select v-model:value="editForm.technique" placeholder="请选择知识点" mode="multiple">
+                <a-select-option v-for="point in knowledgePoints" :key="point.pointId" :value="point.name">
+                  {{ point.name }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -92,47 +96,12 @@
         <a-form-item label="核心概念">
           <a-textarea v-model:value="editForm.coreConcept" rows="3" placeholder="请输入核心概念" />
         </a-form-item>
-        <a-divider>NPC角色设置</a-divider>
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-form-item label="NPC名称">
-              <a-input v-model:value="editForm.npcName" placeholder="请输入NPC名称" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="NPC头像URL">
-              <a-input v-model:value="editForm.npcAvatar" placeholder="请输入头像URL" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="NPC描述">
-              <a-input v-model:value="editForm.npcDescription" placeholder="简短描述" />
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="对话示例">
-          <div class="dialogue-container">
-            <div v-for="(dialogue, index) in parsedDialogues" :key="index" class="dialogue-item" :class="dialogue.speaker === '用户' ? 'user-dialogue' : 'npc-dialogue'">
-              <div class="dialogue-speaker">{{ dialogue.speaker }}</div>
-              <div class="dialogue-content">
-                <a-textarea 
-                  v-model:value="dialogue.content" 
-                  :auto-size="{ minRows: 1, maxRows: 3 }"
-                  @change="updateDialogueJson"
-                />
-              </div>
-              <a-button type="link" danger size="small" @click="removeDialogue(index)" v-if="parsedDialogues.length > 1">
-                删除
-              </a-button>
-            </div>
-            <div class="dialogue-actions">
-              <a-button size="small" @click="addDialogue('用户')">+ 用户对话</a-button>
-              <a-button size="small" @click="addDialogue('NPC')" style="margin-left: 8px;">+ NPC对话</a-button>
-            </div>
-          </div>
-        </a-form-item>
         <a-form-item label="场景提示">
-          <a-textarea v-model:value="editForm.hint" rows="2" placeholder="请输入场景提示" />
+          <a-select v-model:value="editForm.hintIds" placeholder="请选择场景提示" mode="multiple" style="width: 100%">
+            <a-select-option v-for="hint in hints" :key="hint.id" :value="hint.id">
+              {{ hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例' }} - {{ hint.hintText }}
+            </a-select-option>
+          </a-select>
         </a-form-item>
         <a-divider>其他设置</a-divider>
         <a-row :gutter="16">
@@ -232,37 +201,13 @@
         <a-form-item label="核心概念">
           <div style="white-space: pre-wrap;">{{ detailForm.coreConcept || '-' }}</div>
         </a-form-item>
-        <a-divider>NPC角色设置</a-divider>
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-form-item label="NPC名称">
-              <span>{{ detailForm.npcName || '-' }}</span>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="NPC头像URL">
-              <span>{{ detailForm.npcAvatar || '-' }}</span>
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item label="NPC描述">
-              <span>{{ detailForm.npcDescription || '-' }}</span>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item label="对话示例">
-          <div v-if="detailForm.dialogueExample" class="dialogue-preview">
-            <div v-for="(dialogue, index) in parseDialogues(detailForm.dialogueExample)" :key="index" class="dialogue-item">
-              <div class="dialogue-speaker" :class="dialogue.speaker === '用户' ? 'user' : 'npc'">
-                {{ dialogue.speaker }}
-              </div>
-              <div class="dialogue-content">{{ dialogue.content }}</div>
-            </div>
-          </div>
-          <span v-else>-</span>
-        </a-form-item>
         <a-form-item label="场景提示">
-          <div style="white-space: pre-wrap;">{{ detailForm.hint || '-' }}</div>
+          <div v-if="detailForm.hintIds">
+            <a-tag v-for="hintId in getHintIds(detailForm.hintIds)" :key="hintId" style="margin-bottom: 4px; margin-right: 4px;">
+              {{ getHintName(hintId) }}
+            </a-tag>
+          </div>
+          <div v-else>-</div>
         </a-form-item>
         <a-divider>其他设置</a-divider>
         <a-row :gutter="16">
@@ -315,6 +260,8 @@ export default {
     const levels = ref([])
     const allResources = ref([])
     const selectedResourceIds = ref([])
+    const knowledgePoints = ref([])
+    const hints = ref([])
 
     const columns = [
       { title: '场景名称', dataIndex: 'name', key: 'name' },
@@ -344,13 +291,13 @@ export default {
       name: '',
       order: 1,
       background: '',
-      technique: '',
+      technique: [],
       coreConcept: '',
       npcName: '',
       npcAvatar: '',
       npcDescription: '',
       dialogueExample: '',
-      hint: '',
+      hintIds: [],
       difficulty: 1,
       requiredIntimacyScore: 0,
       estimatedTime: 15,
@@ -378,6 +325,24 @@ export default {
         allResources.value = res.data.records
       } catch (error) {
         console.error('获取学习资源失败:', error)
+      }
+    }
+
+    const fetchKnowledgePoints = async () => {
+      try {
+        const res = await api.post('/knowledge-points/page', { page: 1, pageSize: 100 })
+        knowledgePoints.value = res.data.records
+      } catch (error) {
+        console.error('获取知识点失败:', error)
+      }
+    }
+
+    const fetchHints = async () => {
+      try {
+        const res = await api.post('/hints/page', { page: 1, pageSize: 200 })
+        hints.value = res.data.records
+      } catch (error) {
+        console.error('获取场景提示失败:', error)
       }
     }
 
@@ -418,6 +383,8 @@ export default {
     onMounted(async () => {
       await fetchLevels()
       await fetchResources()
+      await fetchKnowledgePoints()
+      await fetchHints()
       fetchScenes()
     })
 
@@ -452,6 +419,30 @@ export default {
 
     const showEditModal = (record) => {
       editForm.value = { ...record }
+      // 处理知识点字段，将字符串转换为数组
+      if (record.technique) {
+        if (typeof record.technique === 'string') {
+          editForm.value.technique = record.technique.split(',').map(item => item.trim())
+        } else if (Array.isArray(record.technique)) {
+          editForm.value.technique = record.technique
+        }
+      } else {
+        editForm.value.technique = []
+      }
+      // 处理场景提示字段，将字符串转换为数组
+      if (record.hintIds) {
+        if (typeof record.hintIds === 'string') {
+          try {
+            editForm.value.hintIds = JSON.parse(record.hintIds)
+          } catch (e) {
+            editForm.value.hintIds = []
+          }
+        } else if (Array.isArray(record.hintIds)) {
+          editForm.value.hintIds = record.hintIds
+        }
+      } else {
+        editForm.value.hintIds = []
+      }
       parsedDialogues.value = parseDialogues(record.dialogueExample)
       try {
         selectedResourceIds.value = record.resourceIds ? JSON.parse(record.resourceIds) : []
@@ -473,8 +464,17 @@ export default {
 
     const handleEditOk = async () => {
       try {
-        editForm.value.resourceIds = JSON.stringify(selectedResourceIds.value)
-        await api.post('/scenes/update', editForm.value)
+        // 将知识点数组转换为逗号分隔的字符串
+        const formData = { ...editForm.value }
+        if (Array.isArray(formData.technique)) {
+          formData.technique = formData.technique.join(',')
+        }
+        // 将提示ID数组转换为JSON字符串
+        if (Array.isArray(formData.hintIds)) {
+          formData.hintIds = JSON.stringify(formData.hintIds)
+        }
+        formData.resourceIds = JSON.stringify(selectedResourceIds.value)
+        await api.post('/scenes/update', formData)
         editModalVisible.value = false
         message.success('场景编辑成功')
         fetchScenes()
@@ -491,7 +491,7 @@ export default {
         content: `删除场景 "${record.name}"`,
         okType: 'danger',
         async onOk() {
-          await api.post('/scenes/delete', { id: record.id })
+          await api.post(`/scenes/delete?id=${record.id}`)
           message.success('删除成功')
           fetchScenes()
         }
@@ -544,15 +544,41 @@ export default {
       return resource ? resource.title : resourceId
     }
 
+    const getHintById = (hintId) => {
+      if (!hintId) return []
+      const hint = hints.value.find(h => h.id === hintId)
+      return hint ? [hint] : []
+    }
+
+    const getHintIds = (hintIds) => {
+      if (!hintIds) return []
+      if (typeof hintIds === 'string') {
+        try {
+          return JSON.parse(hintIds)
+        } catch {
+          return []
+        }
+      }
+      return Array.isArray(hintIds) ? hintIds : []
+    }
+
+    const getHintName = (hintId) => {
+      const hint = hints.value.find(h => h.id === hintId)
+      if (hint) {
+        return `${hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例'} - ${hint.hintText}`
+      }
+      return hintId
+    }
+
     return {
-      scenes, levels, allResources, selectedResourceIds, columns, pagination, searchForm,
+      scenes, levels, allResources, selectedResourceIds, knowledgePoints, hints, columns, pagination, searchForm,
       editModalVisible, editForm, detailModalVisible, detailForm,
       handleTableChange, handleSearch, handleReset,
       goToAdd, showEditModal, showDetailModal, handleEditOk, handleEditCancel, handleDetailCancel, deleteScene,
       filterResourceOption,
       parsedDialogues, addDialogue, removeDialogue, updateDialogueJson,
       getImageUrl, handleSceneImageUpload,
-      getResourceIds, getResourceName, parseDialogues
+      getResourceIds, getResourceName, getHintById, getHintIds, getHintName, parseDialogues
     }
   }
 }

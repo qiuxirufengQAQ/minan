@@ -78,7 +78,7 @@
         <a-form-item label="选项">
           <div v-for="(option, index) in addForm.options" :key="index" class="option-item">
             <a-input
-              v-model:value="option.label"
+              v-model:value="addForm.options[index]"
               :placeholder="`选项 ${String.fromCharCode(65 + index)}`"
               style="width: calc(100% - 80px)"
             />
@@ -97,8 +97,8 @@
         </a-form-item>
         <a-form-item label="正确答案">
           <a-select v-model:value="addForm.correctAnswer" placeholder="请选择正确答案">
-            <a-select-option v-for="(option, index) in addForm.options" :key="index" :value="option.value">
-              {{ String.fromCharCode(65 + index) }}. {{ option.label }}
+            <a-select-option v-for="(option, index) in addForm.options" :key="index" :value="option">
+              {{ String.fromCharCode(65 + index) }}. {{ option }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -140,7 +140,7 @@
         <a-form-item label="选项">
           <div v-for="(option, index) in editForm.options" :key="index" class="option-item">
             <a-input
-              v-model:value="option.label"
+              v-model:value="editForm.options[index]"
               :placeholder="`选项 ${String.fromCharCode(65 + index)}`"
               style="width: calc(100% - 80px)"
             />
@@ -159,8 +159,8 @@
         </a-form-item>
         <a-form-item label="正确答案">
           <a-select v-model:value="editForm.correctAnswer" placeholder="请选择正确答案">
-            <a-select-option v-for="(option, index) in editForm.options" :key="index" :value="option.value">
-              {{ String.fromCharCode(65 + index) }}. {{ option.label }}
+            <a-select-option v-for="(option, index) in editForm.options" :key="index" :value="option">
+              {{ String.fromCharCode(65 + index) }}. {{ option }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -190,9 +190,9 @@
         </a-descriptions-item>
         <a-descriptions-item label="选项" :span="2">
           <div v-for="(option, index) in (detailForm.options || [])" :key="index" class="option-display">
-            <span :class="{ 'correct-answer': option.value === detailForm.correctAnswer }">
-              {{ String.fromCharCode(65 + index) }}. {{ option.label }}
-              <a-tag v-if="option.value === detailForm.correctAnswer" color="green">正确答案</a-tag>
+            <span :class="{ 'correct-answer': option === detailForm.correctAnswer }">
+              {{ String.fromCharCode(65 + index) }}. {{ option }}
+              <a-tag v-if="option === detailForm.correctAnswer" color="green">正确答案</a-tag>
             </span>
           </div>
         </a-descriptions-item>
@@ -258,15 +258,12 @@ export default {
 
     const addOption = (options) => {
       if (options.length < 6) {
-        options.push({ label: '', value: String.fromCharCode(65 + options.length) })
+        options.push('')
       }
     }
 
     const removeOption = (options, index) => {
       options.splice(index, 1)
-      options.forEach((opt, i) => {
-        opt.value = String.fromCharCode(65 + i)
-      })
     }
 
     const fetchPoints = async () => {
@@ -335,10 +332,7 @@ export default {
     const showEditModal = (record) => {
       editForm.value = {
         ...record,
-        options: record.options || [
-          { label: '', value: 'A' },
-          { label: '', value: 'B' }
-        ]
+        options: record.options || ['', '']
       }
       editModalVisible.value = true
     }

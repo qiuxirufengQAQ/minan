@@ -27,22 +27,20 @@ public class KnowledgePoint {
 
     private String coreConcept;
 
+    private String caseStudies;
+
     private Integer difficulty;
 
     private Integer importance;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<String> prerequisites;
-
-    @TableField(typeHandler = JacksonTypeHandler.class)
     private List<String> tags;
 
-    private String iconUrl;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> applicationScenarios;
 
     @TableField("`order`")
     private Integer order;
-
-    private Integer isActive;
 
     private LocalDateTime createdAt;
 

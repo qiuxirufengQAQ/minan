@@ -19,8 +19,6 @@ public class LearningResource {
 
     private String pointId;
 
-    private String sceneId;
-
     private String title;
 
     private String content;

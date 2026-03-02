@@ -9,14 +9,13 @@
           </a-button>
         </div>
       </template>
-      <a-table 
-        :columns="columns" 
-        :data-source="levels" 
-        row-key="id"
-        :pagination="pagination"
-        @change="handleTableChange"
-      >
+      <a-table :columns="columns" :data-source="levels" row-key="id" :pagination="pagination"
+        @change="handleTableChange">
         <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'icon'">
+            <a-image v-if="record.iconUrl" :src="getImageUrl(record.iconUrl)" :width="50" :height="50" :preview="true" style="object-fit: cover; border-radius: 4px;" />
+            <span v-else>-</span>
+          </template>
           <template v-if="column.key === 'difficulty'">
             <a-rate :value="record.difficulty" :count="5" disabled style="font-size: 12px" />
           </template>
@@ -44,13 +43,7 @@
       </a-table>
     </a-card>
 
-    <a-modal
-      title="编辑关卡"
-      v-model:open="editModalVisible"
-      @ok="handleEditOk"
-      @cancel="handleEditCancel"
-      :width="800"
-    >
+    <a-modal title="编辑关卡" v-model:open="editModalVisible" @ok="handleEditOk" @cancel="handleEditCancel" :width="800">
       <a-form :model="editForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-row :gutter="16">
           <a-col :span="12">
@@ -76,9 +69,13 @@
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="关卡描述">
-          <a-textarea v-model:value="editForm.description" rows="3" placeholder="请输入关卡描述" />
-        </a-form-item>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="关卡描述">
+              <a-textarea v-model:value="editForm.description" rows="3" placeholder="请输入关卡描述" />
+            </a-form-item>
+          </a-col>
+        </a-row>
         <a-row :gutter="16">
           <a-col :span="8">
             <a-form-item label="最低CP奖励">
@@ -102,14 +99,12 @@
               <a-input-number v-model:value="editForm.estimatedTime" :min="5" :step="5" style="width: 100%" />
             </a-form-item>
           </a-col>
+        </a-row>
+        <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="关卡图标">
-              <a-upload
-                name="file"
-                :show-upload-list="false"
-                :customRequest="({ file }) => handleIconUpload(file)"
-                accept="image/*"
-              >
+              <a-upload name="file" :show-upload-list="false" :customRequest="({ file }) => handleIconUpload(file)"
+                accept="image/*">
                 <div v-if="editForm.iconUrl" class="icon-preview">
                   <img :src="getImageUrl(editForm.iconUrl)" alt="图标" />
                   <div class="upload-mask">
@@ -127,13 +122,10 @@
       </a-form>
     </a-modal>
 
-    <a-modal
-      title="关卡详情"
-      v-model:open="detailModalVisible"
-      @cancel="handleDetailCancel"
-      :width="800"
-      :footer="null"
-    >
+    <a-modal title="关卡详情" v-model:open="detailModalVisible" @cancel="handleDetailCancel" :width="800" :footer="null">
+      <div v-if="detailForm.iconUrl" style="margin-bottom: 20px; text-align: center;">
+        <a-image :src="getImageUrl(detailForm.iconUrl)" :width="200" :height="200" :preview="true" style="object-fit: cover; border-radius: 8px;" />
+      </div>
       <a-descriptions :column="2" bordered>
         <a-descriptions-item label="关卡序号">{{ detailForm.order }}</a-descriptions-item>
         <a-descriptions-item label="关卡名称">{{ detailForm.name }}</a-descriptions-item>
@@ -168,7 +160,8 @@ export default {
 
     const columns = [
       { title: '序号', dataIndex: 'order', key: 'order', width: 60 },
-      { title: '关卡名称', dataIndex: 'name', key: 'name' },
+      { title: '图标', key: 'icon', width: 80 },
+      { title: '关卡名称', dataIndex: 'name', key: 'name', width: 120 },
       { title: '主题', dataIndex: 'theme', key: 'theme', width: 120 },
       { title: '理论', key: 'theory', width: 100 },
       { title: 'CP奖励', key: 'cpRange', width: 120 },
@@ -291,7 +284,7 @@ export default {
     const handleIconUpload = async (file) => {
       const formData = new FormData()
       formData.append('file', file)
-      
+
       try {
         const response = await api.post('/upload', formData, {
           headers: {

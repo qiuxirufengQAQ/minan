@@ -17,14 +17,14 @@ public class SceneHintController {
     @Autowired
     private SceneHintService sceneHintService;
 
-    @GetMapping("/scene/{sceneId}")
-    public Response<List<SceneHint>> listByScene(@PathVariable String sceneId) {
-        return Response.success(sceneHintService.listBySceneId(sceneId));
+    @GetMapping("/all")
+    public Response<List<SceneHint>> listAll() {
+        return Response.success(sceneHintService.listAll());
     }
 
     @PostMapping("/page")
     public Response<BasePageResponse<SceneHint>> page(@RequestBody HintPageRequest request) {
-        Page<SceneHint> page = sceneHintService.page(request.getPage(), request.getPageSize(), request.getSceneId());
+        Page<SceneHint> page = sceneHintService.page(request.getPage(), request.getPageSize(), request.getHintType());
         BasePageResponse<SceneHint> response = new BasePageResponse<>();
         response.setRecords(page.getRecords());
         response.setTotal(page.getTotal());
@@ -39,8 +39,13 @@ public class SceneHintController {
     }
 
     @PostMapping("/add")
-    public Response<Boolean> add(@RequestBody SceneHint hint) {
-        return Response.success(sceneHintService.add(hint));
+    public Response<SceneHint> add(@RequestBody SceneHint hint) {
+        boolean success = sceneHintService.add(hint);
+        if (success) {
+            return Response.success(hint);
+        } else {
+            return Response.error("添加场景提示失败");
+        }
     }
 
     @PostMapping("/update")
@@ -56,14 +61,14 @@ public class SceneHintController {
     public static class HintPageRequest {
         private Integer page = 1;
         private Integer pageSize = 10;
-        private String sceneId;
+        private String hintType;
 
         public Integer getPage() { return page; }
         public void setPage(Integer page) { this.page = page; }
         public Integer getPageSize() { return pageSize; }
         public void setPageSize(Integer pageSize) { this.pageSize = pageSize; }
-        public String getSceneId() { return sceneId; }
-        public void setSceneId(String sceneId) { this.sceneId = sceneId; }
+        public String getHintType() { return hintType; }
+        public void setHintType(String hintType) { this.hintType = hintType; }
     }
 
     public static class IdRequest {

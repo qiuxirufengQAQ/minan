@@ -87,12 +87,13 @@ CREATE TABLE IF NOT EXISTS `evaluation_dimension` (
 -- 知识点分类表
 CREATE TABLE IF NOT EXISTS `knowledge_category` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `category_id` varchar(64) NOT NULL COMMENT '分类唯一标识',
+  `category_id` varchar(64) NOT NULL COMMENT '分类唯一ID',
   `name` varchar(100) NOT NULL COMMENT '分类名称',
   `parent_id` varchar(64) DEFAULT NULL COMMENT '父分类ID',
   `level` int(11) DEFAULT '1' COMMENT '分类层级: 1=阶段(A/C/S), 2=子阶段(A1/A2/A3), 3=技能类型',
   `description` text COMMENT '分类描述',
-  `icon_url` varchar(500) DEFAULT NULL COMMENT '分类图标',
+  `theory_basis` varchar(200) DEFAULT NULL COMMENT '理论依据（关联《谜男方法》章节）',
+  `learning_goal` text COMMENT '学习目标',
   `order` int(11) DEFAULT '0' COMMENT '排序',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -110,20 +111,18 @@ CREATE TABLE IF NOT EXISTS `knowledge_point` (
   `name` varchar(200) NOT NULL COMMENT '知识点名称',
   `description` text COMMENT '知识点描述',
   `core_concept` text COMMENT '核心概念',
+  `case_studies` text COMMENT '案例分析',
   `difficulty` int(11) DEFAULT '1' COMMENT '难度等级: 1-5',
   `importance` int(11) DEFAULT '1' COMMENT '重要程度: 1-5',
-  `prerequisites` json DEFAULT NULL COMMENT '前置知识点ID列表',
   `tags` json DEFAULT NULL COMMENT '标签列表',
-  `icon_url` varchar(500) DEFAULT NULL COMMENT '知识点图标',
+  `application_scenarios` json DEFAULT NULL COMMENT '应用场景',
   `order` int(11) DEFAULT '0' COMMENT '排序',
-  `is_active` tinyint(1) DEFAULT '1' COMMENT '是否启用',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_point_id` (`point_id`) COMMENT '确保知识点ID唯一',
   KEY `idx_category_id` (`category_id`) COMMENT '按分类查询知识点',
-  KEY `idx_difficulty` (`difficulty`) COMMENT '按难度查询知识点',
-  KEY `idx_is_active` (`is_active`) COMMENT '查询启用的知识点'
+  KEY `idx_difficulty` (`difficulty`) COMMENT '按难度查询知识点'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='知识点表';
 
 -- 知识点练习题表

@@ -25,7 +25,7 @@ public class KnowledgeQuiz {
     private String question;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<Map<String, String>> options;
+    private List<String> options;
 
     private String correctAnswer;
 

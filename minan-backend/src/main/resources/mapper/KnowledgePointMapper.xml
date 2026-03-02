@@ -9,13 +9,12 @@
         <result property="name" column="name"/>
         <result property="description" column="description"/>
         <result property="coreConcept" column="core_concept"/>
+        <result property="caseStudies" column="case_studies"/>
         <result property="difficulty" column="difficulty"/>
         <result property="importance" column="importance"/>
-        <result property="prerequisites" column="prerequisites" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
         <result property="tags" column="tags" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
-        <result property="iconUrl" column="icon_url"/>
+        <result property="applicationScenarios" column="application_scenarios" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
         <result property="order" column="order"/>
-        <result property="isActive" column="is_active"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
         <result property="categoryName" column="category_name"/>

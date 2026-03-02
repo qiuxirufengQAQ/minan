@@ -53,8 +53,20 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item label="关卡图标URL">
-              <a-input v-model:value="form.iconUrl" placeholder="请输入图标URL" />
+            <a-form-item label="关卡图标">
+              <a-upload name="file" :show-upload-list="false" :customRequest="({ file }) => handleIconUpload(file)"
+                accept="image/*">
+                <div v-if="form.iconUrl" class="icon-preview">
+                  <img :src="getImageUrl(form.iconUrl)" alt="图标" />
+                  <div class="upload-mask">
+                    <span>更换</span>
+                  </div>
+                </div>
+                <div v-else class="upload-placeholder">
+                  <plus-outlined />
+                  <div class="upload-text">上传图标</div>
+                </div>
+              </a-upload>
             </a-form-item>
           </a-col>
         </a-row>
@@ -78,10 +90,14 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { PlusOutlined } from '@ant-design/icons-vue'
 import api from '@/api/request'
 
 export default {
   name: 'AddLevelView',
+  components: {
+    PlusOutlined
+  },
   setup() {
     const router = useRouter()
     const form = ref({
@@ -113,11 +129,111 @@ export default {
       router.push('/levels')
     }
 
+    const getImageUrl = (url) => {
+      if (!url) return ''
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url
+      }
+      return '/api/uploads' + url
+    }
+
+    const handleIconUpload = async (file) => {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      try {
+        const response = await api.post('/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          params: {
+            type: 'level/icon'
+          }
+        })
+        if (response.code === 200) {
+          form.value.iconUrl = response.data
+          message.success('图标上传成功')
+        } else {
+          message.error(response.message || '上传失败')
+        }
+      } catch (error) {
+        console.error('上传失败:', error)
+        message.error('上传失败')
+      }
+    }
+
     return {
       form,
       handleSubmit,
-      goBack
+      goBack,
+      PlusOutlined,
+      getImageUrl,
+      handleIconUpload
     }
   }
 }
 </script>
+
+<style scoped>
+.upload-placeholder {
+  width: 60px;
+  height: 60px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #fafafa;
+  transition: border-color 0.3s;
+}
+
+.upload-placeholder:hover {
+  border-color: #1890ff;
+}
+
+.upload-text {
+  margin-top: 4px;
+  color: #666;
+  font-size: 12px;
+}
+
+.icon-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+.icon-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.icon-preview:hover .upload-mask {
+  opacity: 1;
+}
+
+.upload-mask span {
+  color: #fff;
+  font-size: 12px;
+}
+</style>

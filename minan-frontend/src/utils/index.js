@@ -1,19 +1,21 @@
-const getApiBaseUrl = () => {
-  const hostname = window.location.hostname
-  const protocol = window.location.protocol
-  return `${protocol}//${hostname}:8080/api`
-}
+import config from '@/config'
 
-const API_BASE_URL = getApiBaseUrl()
-
+// 获取图片URL
 export function getImageUrl(path) {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path
-  }
-  return `${API_BASE_URL}/uploads${path}`
+  return config.assets.getImageUrl(path)
 }
 
+// 获取头像URL
 export function getAvatarUrl(avatarUrl) {
-  return getImageUrl(avatarUrl)
+  return config.assets.getAvatarUrl(avatarUrl)
+}
+
+// 获取API基础URL
+export function getApiBaseUrl() {
+  return config.server.apiUrl
+}
+
+// 获取上传URL
+export function getUploadUrl() {
+  return config.upload.url
 }

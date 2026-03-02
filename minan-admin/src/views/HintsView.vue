@@ -7,19 +7,19 @@
           <a-button type="primary" @click="showAddModal">新增提示</a-button>
         </div>
       </template>
-      <div class="search-form">
-        <a-form :model="searchForm" layout="inline" style="margin-bottom: 16px;">
-          <a-form-item label="所属场景">
-            <a-select v-model:value="searchForm.sceneId" placeholder="请选择场景" style="width: 200px;">
-              <a-select-option value="">全部场景</a-select-option>
-              <a-select-option v-for="scene in scenes" :key="scene.sceneId" :value="scene.sceneId">
-                {{ scene.name }}
-              </a-select-option>
+      <div class="search-container">
+        <a-form :model="searchForm" layout="inline">
+          <a-form-item label="提示类型">
+            <a-select v-model:value="searchForm.hintType" placeholder="请选择类型" style="width: 150px">
+              <a-select-option value="">全部</a-select-option>
+              <a-select-option value="keyword">关键词</a-select-option>
+              <a-select-option value="approach">方法</a-select-option>
+              <a-select-option value="example">示例</a-select-option>
+              <a-select-option value="dialogue">对话</a-select-option>
             </a-select>
           </a-form-item>
           <a-form-item>
             <a-button type="primary" @click="handleSearch">搜索</a-button>
-            &nbsp;
             <a-button @click="handleReset">重置</a-button>
           </a-form-item>
         </a-form>
@@ -27,8 +27,8 @@
       <a-table :columns="columns" :data-source="hints" row-key="id" :pagination="pagination" @change="handleTableChange">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'hintType'">
-            <a-tag :color="record.hintType === 'keyword' ? 'blue' : record.hintType === 'approach' ? 'green' : 'orange'">
-              {{ record.hintType === 'keyword' ? '关键词' : record.hintType === 'approach' ? '方法' : '示例' }}
+            <a-tag :color="record.hintType === 'keyword' ? 'blue' : record.hintType === 'approach' ? 'green' : record.hintType === 'example' ? 'orange' : 'purple'">
+              {{ record.hintType === 'keyword' ? '关键词' : record.hintType === 'approach' ? '方法' : record.hintType === 'example' ? '示例' : '对话' }}
             </a-tag>
           </template>
           <template v-if="column.key === 'action'">
@@ -43,18 +43,12 @@
 
     <a-modal title="新增场景提示" v-model:open="addModalVisible" @ok="handleAddOk" @cancel="handleAddCancel" :width="700">
       <a-form :model="addForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-        <a-form-item label="关联场景">
-          <a-select v-model:value="addForm.sceneId" placeholder="请选择场景">
-            <a-select-option v-for="scene in scenes" :key="scene.sceneId" :value="scene.sceneId">
-              {{ scene.name }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
         <a-form-item label="提示类型">
           <a-select v-model:value="addForm.hintType" placeholder="请选择类型">
             <a-select-option value="keyword">关键词</a-select-option>
             <a-select-option value="approach">方法</a-select-option>
             <a-select-option value="example">示例</a-select-option>
+            <a-select-option value="dialogue">对话</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="提示内容">
@@ -68,18 +62,12 @@
 
     <a-modal title="编辑场景提示" v-model:open="editModalVisible" @ok="handleEditOk" @cancel="handleEditCancel" :width="700">
       <a-form :model="editForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-        <a-form-item label="关联场景">
-          <a-select v-model:value="editForm.sceneId" placeholder="请选择场景">
-            <a-select-option v-for="scene in scenes" :key="scene.sceneId" :value="scene.sceneId">
-              {{ scene.name }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
         <a-form-item label="提示类型">
           <a-select v-model:value="editForm.hintType" placeholder="请选择类型">
             <a-select-option value="keyword">关键词</a-select-option>
             <a-select-option value="approach">方法</a-select-option>
             <a-select-option value="example">示例</a-select-option>
+            <a-select-option value="dialogue">对话</a-select-option>
           </a-select>
         </a-form-item>
         <a-form-item label="提示内容">
@@ -102,39 +90,40 @@ export default {
   name: 'HintsView',
   setup() {
     const hints = ref([])
-    const scenes = ref([])
     const columns = [
-      { title: '场景', dataIndex: 'sceneName', key: 'sceneName' },
       { title: '类型', key: 'hintType', width: 100 },
       { title: '提示内容', dataIndex: 'hintText', key: 'hintText', ellipsis: true },
       { title: '排序', dataIndex: 'order', key: 'order', width: 80 },
       { title: '操作', key: 'action', width: 120 }
     ]
     const pagination = ref({ current: 1, pageSize: 10, total: 0, showTotal: (t) => `共 ${t} 条` })
-    const searchForm = ref({ sceneId: '' })
     const addModalVisible = ref(false)
-    const addForm = ref({ sceneId: '', hintType: 'keyword', hintText: '', order: 0 })
+    const addForm = ref({ hintType: 'keyword', hintText: '', order: 0 })
     const editModalVisible = ref(false)
-    const editForm = ref({ id: '', sceneId: '', hintType: 'keyword', hintText: '', order: 0 })
-
-    const fetchScenes = async () => {
-      const res = await api.post('/scenes/page', { page: 1, pageSize: 100 })
-      scenes.value = res.data.records
-    }
+    const editForm = ref({ id: '', hintType: 'keyword', hintText: '', order: 0 })
+    const searchForm = ref({ hintType: '' })
 
     const fetchHints = async () => {
       const res = await api.post('/hints/page', {
         page: pagination.value.current,
         pageSize: pagination.value.pageSize,
-        sceneId: searchForm.value.sceneId
+        hintType: searchForm.value.hintType
       })
       const data = res.data
-      hints.value = data.records.map(r => ({
-        ...r,
-        sceneName: scenes.value.find(s => s.sceneId === r.sceneId)?.name || r.sceneId
-      }))
+      hints.value = data.records
       pagination.value.total = data.total
       pagination.value.current = data.current
+    }
+
+    const handleSearch = () => {
+      pagination.value.current = 1
+      fetchHints()
+    }
+
+    const handleReset = () => {
+      searchForm.value = { hintType: '' }
+      pagination.value.current = 1
+      fetchHints()
     }
 
     const handleTableChange = (p) => {
@@ -143,13 +132,10 @@ export default {
       fetchHints()
     }
 
-    const handleSearch = () => { pagination.value.current = 1; fetchHints() }
-    const handleReset = () => { searchForm.value.sceneId = ''; handleSearch() }
-
-    onMounted(async () => { await fetchScenes(); fetchHints() })
+    onMounted(() => { fetchHints() })
 
     const showAddModal = () => {
-      addForm.value = { sceneId: '', hintType: 'keyword', hintText: '', order: 0 }
+      addForm.value = { hintType: 'keyword', hintText: '', order: 0 }
       addModalVisible.value = true
     }
 
@@ -189,8 +175,9 @@ export default {
     }
 
     return {
-      hints, scenes, columns, pagination, searchForm,
+      hints, columns, pagination,
       addModalVisible, addForm, editModalVisible, editForm,
+      searchForm,
       handleTableChange, handleSearch, handleReset,
       showAddModal, showEditModal, handleAddOk, handleAddCancel, handleEditOk, handleEditCancel, deleteHint
     }
@@ -201,4 +188,5 @@ export default {
 <style scoped>
 .card-title { display: flex; justify-content: space-between; align-items: center; }
 .action-buttons { display: flex; }
+.search-container { margin-bottom: 16px; padding: 16px; background-color: #f5f5f5; border-radius: 4px; }
 </style>

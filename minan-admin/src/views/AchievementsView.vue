@@ -179,6 +179,7 @@ import { ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { UploadOutlined } from '@ant-design/icons-vue'
 import api from '@/api/request'
+import config from '@/config'
 
 export default {
   components: {
@@ -406,7 +407,7 @@ export default {
           }
         })
         if (response.code === 200) {
-          const iconUrl = window.location.protocol + '//' + window.location.hostname + ':8080/api/uploads' + response.data
+          const iconUrl = config.assets.getImageUrl(response.data)
           addForm.value.iconUrl = iconUrl
           console.log('上传成功，设置iconUrl为：', iconUrl)
           console.log('当前addForm：', addForm.value)
@@ -437,7 +438,7 @@ export default {
           }
         })
         if (response.code === 200) {
-          const iconUrl = window.location.protocol + '//' + window.location.hostname + ':8080/api/uploads' + response.data
+          const iconUrl = config.assets.getImageUrl(response.data)
           editForm.value.iconUrl = iconUrl
           console.log('上传成功，设置iconUrl为：', iconUrl)
           console.log('当前editForm：', editForm.value)

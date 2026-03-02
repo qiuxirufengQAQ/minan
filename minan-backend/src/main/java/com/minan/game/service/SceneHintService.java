@@ -16,20 +16,24 @@ public class SceneHintService {
     @Autowired
     private SceneHintMapper sceneHintMapper;
 
-    public List<SceneHint> listBySceneId(String sceneId) {
+    public List<SceneHint> listAll() {
         QueryWrapper<SceneHint> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("scene_id", sceneId).orderByAsc("`order`");
+        queryWrapper.orderByAsc("`order`");
         return sceneHintMapper.selectList(queryWrapper);
     }
 
-    public Page<SceneHint> page(int pageNum, int pageSize, String sceneId) {
+    public Page<SceneHint> page(int pageNum, int pageSize, String hintType) {
         Page<SceneHint> page = new Page<>(pageNum, pageSize);
         QueryWrapper<SceneHint> queryWrapper = new QueryWrapper<>();
-        if (sceneId != null && !sceneId.isEmpty()) {
-            queryWrapper.eq("scene_id", sceneId);
+        if (hintType != null && !hintType.isEmpty()) {
+            queryWrapper.eq("hint_type", hintType);
         }
-        queryWrapper.orderByAsc("scene_id", "`order`");
+        queryWrapper.orderByAsc("`order`");
         return sceneHintMapper.selectPage(page, queryWrapper);
+    }
+
+    public Page<SceneHint> page(int pageNum, int pageSize) {
+        return page(pageNum, pageSize, null);
     }
 
     public SceneHint getById(Long id) {

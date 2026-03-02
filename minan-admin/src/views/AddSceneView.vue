@@ -36,7 +36,11 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="知识点">
-              <a-input v-model:value="form.technique" placeholder="请输入知识点" />
+              <a-select v-model:value="form.technique" placeholder="请选择知识点" mode="multiple">
+                <a-select-option v-for="point in knowledgePoints" :key="point.pointId" :value="point.name">
+                  {{ point.name }}
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
@@ -70,7 +74,11 @@
           <a-textarea v-model:value="form.dialogueExample" rows="3" placeholder="请输入对话示例" />
         </a-form-item>
         <a-form-item label="场景提示">
-          <a-textarea v-model:value="form.hint" rows="2" placeholder="请输入场景提示" />
+          <a-select v-model:value="form.hintIds" placeholder="请选择场景提示" mode="multiple" style="width: 100%">
+            <a-select-option v-for="hint in hints" :key="hint.id" :value="hint.id">
+              {{ hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例' }} - {{ hint.hintText }}
+            </a-select-option>
+          </a-select>
         </a-form-item>
         <a-divider>其他设置</a-divider>
         <a-row :gutter="16">
@@ -125,18 +133,20 @@ export default {
     const router = useRouter()
     const levels = ref([])
     const scenes = ref([])
+    const knowledgePoints = ref([])
+    const hints = ref([])
     const form = ref({
       levelId: '',
       order: 1,
       name: '',
       background: '',
-      technique: '',
+      technique: [],
       coreConcept: '',
       npcName: '',
       npcAvatar: '',
       npcDescription: '',
       dialogueExample: '',
-      hint: '',
+      hintIds: [],
       difficulty: 1,
       prerequisiteSceneId: '',
       estimatedTime: 15,
@@ -164,15 +174,44 @@ export default {
       }
     }
 
+    const fetchKnowledgePoints = async () => {
+      try {
+        const res = await api.post('/knowledge-points/page', { page: 1, pageSize: 100 })
+        knowledgePoints.value = res.data.records
+      } catch (error) {
+        console.error('获取知识点失败:', error)
+      }
+    }
+
+    const fetchHints = async () => {
+      try {
+        const res = await api.post('/hints/page', { page: 1, pageSize: 100 })
+        hints.value = res.data.records
+      } catch (error) {
+        console.error('获取场景提示失败:', error)
+      }
+    }
+
     onMounted(() => {
       fetchLevels()
       fetchScenes()
+      fetchKnowledgePoints()
+      fetchHints()
     })
 
     const handleSubmit = async (e) => {
       e.preventDefault()
       try {
-        await api.post('/scenes/add', form.value)
+        // 将知识点数组转换为逗号分隔的字符串
+        const formData = { ...form.value }
+        if (Array.isArray(formData.technique)) {
+          formData.technique = formData.technique.join(',')
+        }
+        // 将提示ID数组转换为JSON字符串
+        if (Array.isArray(formData.hintIds)) {
+          formData.hintIds = JSON.stringify(formData.hintIds)
+        }
+        await api.post('/scenes/add', formData)
         message.success('场景保存成功')
         router.push('/scenes')
       } catch (error) {
@@ -188,6 +227,8 @@ export default {
       form,
       levels,
       scenes,
+      knowledgePoints,
+      hints,
       handleSubmit,
       goBack
     }

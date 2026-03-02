@@ -17,8 +17,6 @@ public class SceneHint {
 
     private String hintId;
 
-    private String sceneId;
-
     private String hintText;
 
     private String hintType;

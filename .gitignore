@@ -9,6 +9,8 @@
 .DS_Store
 Thumbs.db
 
+book
+
 # 前端项目忽略规则
 minan-admin/node_modules/
 minan-admin/dist/
@@ -71,6 +73,9 @@ minan-backend/.idea/
 minan-backend/src/main/resources/static/uploads/
 minan-backend/upload/
 minan-backend/uploads/
+
+*.py
+*.js
 
 # 日志文件
 logs/

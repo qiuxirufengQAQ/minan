@@ -40,6 +40,11 @@ public class Level {
 
     private Integer difficulty;
 
+    private String difficultyLevel;
+
+    @TableField(exist = false)
+    private Boolean isUnlocked;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

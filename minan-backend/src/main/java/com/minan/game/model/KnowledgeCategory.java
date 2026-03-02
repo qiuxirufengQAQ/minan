@@ -25,7 +25,9 @@ public class KnowledgeCategory {
 
     private String description;
 
-    private String iconUrl;
+    private String theoryBasis;
+
+    private String learningGoal;
 
     @TableField("`order`")
     private Integer order;

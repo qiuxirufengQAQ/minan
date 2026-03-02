@@ -9,13 +9,7 @@
           </a-button>
         </div>
       </template>
-      <a-table 
-        :columns="columns" 
-        :data-source="categories" 
-        row-key="id"
-        :pagination="false"
-        default-expand-all-rows
-      >
+      <a-table :columns="columns" :data-source="categories" row-key="id" :pagination="false" default-expand-all-rows>
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'level'">
             <a-tag :color="getLevelColor(record.level)">
@@ -32,25 +26,14 @@
       </a-table>
     </a-card>
 
-    <a-modal
-      title="新增分类"
-      v-model:open="addModalVisible"
-      @ok="handleAddOk"
-      @cancel="handleAddCancel"
-      :width="600"
-    >
+    <a-modal title="新增分类" v-model:open="addModalVisible" @ok="handleAddOk" @cancel="handleAddCancel" :width="600">
       <a-form :model="addForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-form-item label="分类名称">
           <a-input v-model:value="addForm.name" placeholder="请输入分类名称" />
         </a-form-item>
         <a-form-item label="父级分类">
-          <a-tree-select
-            v-model:value="addForm.parentId"
-            :tree-data="categoryTreeData"
-            placeholder="请选择父级分类（不选则为顶级分类）"
-            allow-clear
-            :field-names="{ label: 'name', value: 'categoryId', children: 'children' }"
-          />
+          <a-tree-select v-model:value="addForm.parentId" :tree-data="categoryTreeData" placeholder="请选择父级分类（不选则为顶级分类）"
+            allow-clear :field-names="{ label: 'name', value: 'categoryId', children: 'children' }" />
         </a-form-item>
         <a-form-item label="分类层级">
           <a-select v-model:value="addForm.level" placeholder="请选择层级">
@@ -68,25 +51,14 @@
       </a-form>
     </a-modal>
 
-    <a-modal
-      title="编辑分类"
-      v-model:open="editModalVisible"
-      @ok="handleEditOk"
-      @cancel="handleEditCancel"
-      :width="600"
-    >
+    <a-modal title="编辑分类" v-model:open="editModalVisible" @ok="handleEditOk" @cancel="handleEditCancel" :width="600">
       <a-form :model="editForm" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <a-form-item label="分类名称">
           <a-input v-model:value="editForm.name" placeholder="请输入分类名称" />
         </a-form-item>
         <a-form-item label="父级分类">
-          <a-tree-select
-            v-model:value="editForm.parentId"
-            :tree-data="categoryTreeData"
-            placeholder="请选择父级分类（不选则为顶级分类）"
-            allow-clear
-            :field-names="{ label: 'name', value: 'categoryId', children: 'children' }"
-          />
+          <a-tree-select v-model:value="editForm.parentId" :tree-data="categoryTreeData" placeholder="请选择父级分类（不选则为顶级分类）"
+            allow-clear :field-names="{ label: 'name', value: 'categoryId', children: 'children' }" />
         </a-form-item>
         <a-form-item label="分类层级">
           <a-select v-model:value="editForm.level" placeholder="请选择层级">
@@ -117,7 +89,7 @@ export default {
     const categories = ref([])
 
     const columns = [
-      { title: '分类名称', dataIndex: 'name', key: 'name' },
+      { title: '分类名称', dataIndex: 'name', key: 'name', width: 180 },
       { title: '层级', key: 'level', width: 120 },
       { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
       { title: '排序', dataIndex: 'order', key: 'order', width: 80 },
@@ -224,7 +196,18 @@ export default {
 </script>
 
 <style scoped>
-.card-title { display: flex; justify-content: space-between; align-items: center; }
-.action-buttons { display: flex; align-items: center; }
-.action-buttons .ant-btn { margin-right: 8px; }
+.card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.action-buttons .ant-btn {
+  margin-right: 8px;
+}
 </style>

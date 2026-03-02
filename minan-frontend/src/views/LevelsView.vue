@@ -16,14 +16,33 @@
               :key="level.id"
               hoverable
               class="level-card"
+              :class="{ 'locked': !level.isUnlocked }"
               @click="goToLevel(level)"
             >
               <template #cover>
                 <div class="level-cover">
                   <div class="level-order">第 {{ level.order }} 关</div>
+                  <div v-if="!level.isUnlocked" class="lock-icon">🔒</div>
                 </div>
               </template>
               <a-card-meta :title="level.name" :description="level.description" />
+              <div class="level-meta">
+                <div class="level-difficulty">
+                  <span class="meta-label">难度：</span>
+                  <span class="difficulty-stars">
+                    {{ '⭐'.repeat(level.difficulty || 1) }}
+                    {{ '☆'.repeat(5 - (level.difficulty || 1)) }}
+                  </span>
+                </div>
+                <div class="level-theory" v-if="level.theory">
+                  <span class="meta-label">理论：</span>
+                  <span>{{ level.theory }}</span>
+                </div>
+                <div class="level-time">
+                  <span class="meta-label">时长：</span>
+                  <span>{{ level.estimatedTime || 30 }}分钟</span>
+                </div>
+              </div>
             </a-card>
           </div>
         </a-spin>
@@ -138,6 +157,50 @@ export default {
   color: white;
   font-size: 24px;
   font-weight: bold;
+  position: relative;
+}
+
+.level-card.locked .level-cover {
+  background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%);
+  filter: grayscale(50%);
+}
+
+.lock-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+}
+
+.level-meta {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #666;
+}
+
+.level-meta > div {
+  margin-bottom: 8px;
+}
+
+.meta-label {
+  font-weight: 500;
+  color: #999;
+  margin-right: 8px;
+}
+
+.difficulty-stars {
+  letter-spacing: 2px;
+}
+
+.level-card.locked {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.level-card.locked:hover {
+  transform: none;
 }
 
 @media (max-width: 768px) {

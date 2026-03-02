@@ -202,6 +202,7 @@ import { ref, onMounted } from 'vue'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import api from '@/api/request'
+import config from '@/config'
 
 export default {
   name: 'NpcsView',
@@ -382,14 +383,9 @@ export default {
       })
     }
 
-    const getImageUrl = (url) => {
-      if (!url) return ''
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        return url
+      const getImageUrl = (url) => {
+        return config.assets.getImageUrl(url)
       }
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
-      return baseUrl + '/uploads' + url
-    }
 
     const uploadFile = async (file, type) => {
       const formData = new FormData()
