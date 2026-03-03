@@ -1,6 +1,6 @@
 -- 谜男迷宫游戏数据库表结构
--- 生成时间: 2026-02-26
--- 版本: 1.0
+-- 生成时间: 2026-03-03
+-- 版本: 1.1
 -- 说明: 包含所有表结构和索引定义，不包含数据
 
 SET NAMES utf8mb4;
@@ -242,6 +242,7 @@ CREATE TABLE IF NOT EXISTS `scene` (
   `core_concept` text COMMENT '知识点核心概念',
   `dialogue_example` json DEFAULT NULL COMMENT '示例对话',
   `hint` text COMMENT '场景提示信息',
+  `hint_ids` text COMMENT '关联场景提示ID列表(逗号分隔)',
   `difficulty` int(11) DEFAULT '1' COMMENT '场景难度(1-5)',
   `required_intimacy_score` int(11) DEFAULT '0' COMMENT '解锁所需亲密度积分',
   `estimated_time` int(11) DEFAULT '10' COMMENT '预计完成时长(分钟)',
@@ -262,7 +263,6 @@ CREATE TABLE IF NOT EXISTS `scene` (
 CREATE TABLE IF NOT EXISTS `scene_hint` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `hint_id` varchar(64) NOT NULL COMMENT '提示唯一ID',
-  `scene_id` varchar(64) NOT NULL COMMENT '关联场景ID',
   `hint_text` text NOT NULL COMMENT '提示内容',
   `hint_type` varchar(50) DEFAULT 'keyword' COMMENT '提示类型: keyword/approach/example',
   `order` int(11) DEFAULT '0' COMMENT '提示顺序',
@@ -271,8 +271,7 @@ CREATE TABLE IF NOT EXISTS `scene_hint` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_hint_id` (`hint_id`) COMMENT '确保提示ID唯一',
-  KEY `idx_scene_id` (`scene_id`) COMMENT '按场景查询提示'
+  UNIQUE KEY `uk_hint_id` (`hint_id`) COMMENT '确保提示ID唯一'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='场景提示表';
 
 -- ==============================
