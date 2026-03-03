@@ -98,7 +98,7 @@
         </a-form-item>
         <a-form-item label="场景提示">
           <a-select v-model:value="editForm.hintIds" placeholder="请选择场景提示" mode="multiple" style="width: 100%">
-            <a-select-option v-for="hint in hints" :key="hint.id" :value="hint.id">
+            <a-select-option v-for="hint in hints" :key="hint.hintId" :value="hint.hintId">
               {{ hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例' }} - {{ hint.hintText }}
             </a-select-option>
           </a-select>
@@ -435,7 +435,8 @@ export default {
           try {
             editForm.value.hintIds = JSON.parse(record.hintIds)
           } catch (e) {
-            editForm.value.hintIds = []
+            // 如果JSON解析失败，尝试按逗号分隔
+            editForm.value.hintIds = record.hintIds.split(',').filter(id => id.trim()).map(id => id.trim())
           }
         } else if (Array.isArray(record.hintIds)) {
           editForm.value.hintIds = record.hintIds
@@ -546,7 +547,8 @@ export default {
 
     const getHintById = (hintId) => {
       if (!hintId) return []
-      const hint = hints.value.find(h => h.id === hintId)
+      // 统一转换为字符串进行比较，使用hintId字段而不是id字段
+      const hint = hints.value.find(h => String(h.hintId) === String(hintId))
       return hint ? [hint] : []
     }
 
@@ -556,14 +558,16 @@ export default {
         try {
           return JSON.parse(hintIds)
         } catch {
-          return []
+          // 如果JSON解析失败，尝试按逗号分隔
+          return hintIds.split(',').filter(id => id.trim()).map(id => id.trim())
         }
       }
       return Array.isArray(hintIds) ? hintIds : []
     }
 
     const getHintName = (hintId) => {
-      const hint = hints.value.find(h => h.id === hintId)
+      // 统一转换为字符串进行比较，使用hintId字段而不是id字段
+      const hint = hints.value.find(h => String(h.hintId) === String(hintId))
       if (hint) {
         return `${hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例'} - ${hint.hintText}`
       }
@@ -599,140 +603,47 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #fafafa;
-  transition: border-color 0.3s;
-}
-
-.upload-placeholder:hover {
-  border-color: #1890ff;
 }
 
 .upload-text {
   margin-top: 8px;
+  font-size: 12px;
   color: #666;
-  font-size: 14px;
 }
 
 .scene-image-preview {
+  position: relative;
+  display: inline-block;
   width: 200px;
   height: 120px;
-  position: relative;
-  cursor: pointer;
-  border-radius: 4px;
-  overflow: hidden;
 }
 
 .scene-image-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 4px;
 }
 
 .upload-mask {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
+  font-size: 14px;
   opacity: 0;
   transition: opacity 0.3s;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .scene-image-preview:hover .upload-mask {
   opacity: 1;
-}
-
-.upload-mask span {
-  color: #fff;
-  font-size: 14px;
-}
-
-.dialogue-container {
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  padding: 12px;
-  background: #fafafa;
-}
-
-.dialogue-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  padding: 8px;
-  border-radius: 4px;
-  background: #fff;
-}
-
-.dialogue-item.user-dialogue {
-  flex-direction: row-reverse;
-}
-
-.dialogue-speaker {
-  min-width: 50px;
-  font-weight: 500;
-  color: #1890ff;
-  margin: 0 12px;
-  padding-top: 4px;
-}
-
-.dialogue-item.user-dialogue .dialogue-speaker {
-  color: #52c41a;
-}
-
-.dialogue-content {
-  flex: 1;
-}
-
-.dialogue-actions {
-  margin-top: 8px;
-  text-align: center;
-}
-
-.dialogue-preview {
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 12px;
-  background: #fafafa;
-}
-
-.dialogue-preview .dialogue-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.dialogue-preview .dialogue-item:last-child {
-  margin-bottom: 0;
-}
-
-.dialogue-preview .dialogue-speaker {
-  min-width: 40px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-right: 12px;
-  font-size: 12px;
-}
-
-.dialogue-preview .dialogue-speaker.user {
-  background: #e6f7ff;
-  color: #1890ff;
-}
-
-.dialogue-preview .dialogue-speaker.npc {
-  background: #fff0f6;
-  color: #eb2f96;
-}
-
-.dialogue-preview .dialogue-content {
-  flex: 1;
-  line-height: 1.6;
 }
 </style>

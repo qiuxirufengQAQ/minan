@@ -75,7 +75,7 @@
         </a-form-item>
         <a-form-item label="场景提示">
           <a-select v-model:value="form.hintIds" placeholder="请选择场景提示" mode="multiple" style="width: 100%">
-            <a-select-option v-for="hint in hints" :key="hint.id" :value="hint.id">
+            <a-select-option v-for="hint in hints" :key="hint.hintId" :value="hint.hintId">
               {{ hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例' }} - {{ hint.hintText }}
             </a-select-option>
           </a-select>
@@ -235,3 +235,5 @@ export default {
   }
 }
 </script>
+
+```
