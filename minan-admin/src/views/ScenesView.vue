@@ -24,10 +24,13 @@
           </a-form-item>
         </a-form>
       </div>
-      <a-table :data-source="scenes" row-key="id" :columns="columns" :pagination="pagination" @change="handleTableChange">
+      <a-table :data-source="scenes" row-key="id" :columns="columns" :pagination="pagination"
+        @change="handleTableChange">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'image'">
-            <img v-if="record.imageUrl" :src="getImageUrl(record.imageUrl)" alt="场景图片" style="width: 160px; height: 100px; object-fit: cover; border-radius: 4px;" />
+            <img v-if="record.imageUrl" :src="getImageUrl(record.imageUrl)" alt="场景图片"
+              style="width: 160px; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+              @click="handleImagePreview(getImageUrl(record.imageUrl))" />
             <span v-else>无图片</span>
           </template>
           <template v-if="column.key === 'difficulty'">
@@ -99,7 +102,8 @@
         <a-form-item label="场景提示">
           <a-select v-model:value="editForm.hintIds" placeholder="请选择场景提示" mode="multiple" style="width: 100%">
             <a-select-option v-for="hint in hints" :key="hint.hintId" :value="hint.hintId">
-              {{ hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例' }} - {{ hint.hintText }}
+              {{ hint.hintType === 'keyword' ? '关键词' : hint.hintType === 'approach' ? '方法' : '示例' }} - {{ hint.hintText
+              }}
             </a-select-option>
           </a-select>
         </a-form-item>
@@ -107,7 +111,8 @@
         <a-row :gutter="16">
           <a-col :span="8">
             <a-form-item label="解锁积分">
-              <a-input-number v-model:value="editForm.requiredIntimacyScore" :min="0" style="width: 100%" placeholder="所需亲密度积分" />
+              <a-input-number v-model:value="editForm.requiredIntimacyScore" :min="0" style="width: 100%"
+                placeholder="所需亲密度积分" />
             </a-form-item>
           </a-col>
           <a-col :span="8">
@@ -117,14 +122,10 @@
           </a-col>
           <a-col :span="8">
             <a-form-item label="学习资源">
-              <a-select 
-                v-model:value="selectedResourceIds" 
-                mode="multiple"
-                placeholder="请选择学习资源" 
-                style="width: 100%"
-                :filter-option="filterResourceOption"
-              >
-                <a-select-option v-for="resource in allResources" :key="resource.resourceId" :value="resource.resourceId">
+              <a-select v-model:value="selectedResourceIds" mode="multiple" placeholder="请选择学习资源" style="width: 100%"
+                :filter-option="filterResourceOption">
+                <a-select-option v-for="resource in allResources" :key="resource.resourceId"
+                  :value="resource.resourceId">
                   {{ resource.title }}
                 </a-select-option>
               </a-select>
@@ -134,14 +135,11 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="场景图片">
-              <a-upload
-                name="file"
-                :show-upload-list="false"
-                :customRequest="({ file }) => handleSceneImageUpload(file)"
-                accept="image/*"
-              >
+              <a-upload name="file" :show-upload-list="false"
+                :customRequest="({ file }) => handleSceneImageUpload(file)" accept="image/*">
                 <div v-if="editForm.imageUrl" class="scene-image-preview">
-                  <img :src="getImageUrl(editForm.imageUrl)" alt="场景图片" />
+                  <img :src="getImageUrl(editForm.imageUrl)" alt="场景图片"
+                    @click="handleImagePreview(getImageUrl(editForm.imageUrl))" />
                   <div class="upload-mask">
                     <span>更换</span>
                   </div>
@@ -198,17 +196,24 @@
             </a-form-item>
           </a-col>
         </a-row>
-        <a-form-item label="核心概念">
-          <div style="white-space: pre-wrap;">{{ detailForm.coreConcept || '-' }}</div>
-        </a-form-item>
-        <a-form-item label="场景提示">
-          <div v-if="detailForm.hintIds">
-            <a-tag v-for="hintId in getHintIds(detailForm.hintIds)" :key="hintId" style="margin-bottom: 4px; margin-right: 4px;">
-              {{ getHintName(hintId) }}
-            </a-tag>
-          </div>
-          <div v-else>-</div>
-        </a-form-item>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item label="核心概念">
+              <div style="white-space: pre-wrap;">{{ detailForm.coreConcept || '-' }}</div>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="场景提示">
+              <div v-if="detailForm.hintIds">
+                <a-tag v-for="hintId in getHintIds(detailForm.hintIds)" :key="hintId"
+                  style="margin-bottom: 4px; margin-right: 4px;">
+                  {{ getHintName(hintId) }}
+                </a-tag>
+              </div>
+              <div v-else>-</div>
+            </a-form-item>
+          </a-col>
+        </a-row>
         <a-divider>其他设置</a-divider>
         <a-row :gutter="16">
           <a-col :span="8">
@@ -224,7 +229,8 @@
           <a-col :span="8">
             <a-form-item label="学习资源">
               <div v-if="detailForm.resourceIds">
-                <a-tag v-for="resourceId in getResourceIds(detailForm.resourceIds)" :key="resourceId" style="margin-bottom: 4px;">
+                <a-tag v-for="resourceId in getResourceIds(detailForm.resourceIds)" :key="resourceId"
+                  style="margin-bottom: 4px;">
                   {{ getResourceName(resourceId) }}
                 </a-tag>
               </div>
@@ -235,12 +241,21 @@
         <a-row :gutter="16">
           <a-col :span="12">
             <a-form-item label="场景图片">
-              <img v-if="detailForm.imageUrl" :src="getImageUrl(detailForm.imageUrl)" alt="场景图片" style="max-width: 200px; border-radius: 8px;" />
+              <img v-if="detailForm.imageUrl" :src="getImageUrl(detailForm.imageUrl)" alt="场景图片"
+                style="max-width: 200px; border-radius: 8px; cursor: pointer;"
+                @click="handleImagePreview(getImageUrl(detailForm.imageUrl))" />
               <span v-else>-</span>
             </a-form-item>
           </a-col>
         </a-row>
       </a-form>
+    </a-modal>
+
+    <!-- 图片预览模态框 -->
+    <a-modal v-model:open="previewVisible" :footer="null" :closable="true" :mask-closable="true" width="800px">
+      <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+        <img :src="previewImageUrl" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+      </div>
     </a-modal>
   </div>
 </template>
@@ -264,13 +279,13 @@ export default {
     const hints = ref([])
 
     const columns = [
-      { title: '场景名称', dataIndex: 'name', key: 'name' },
-      { title: '顺序', dataIndex: 'order', key: 'order', width: 60 },
-      { title: '所属关卡', dataIndex: 'levelName', key: 'levelName' },
-      { title: '难度', key: 'difficulty', width: 100 },
-      { title: '解锁积分', dataIndex: 'requiredIntimacyScore', key: 'requiredIntimacyScore', width: 80 },
+      { title: '场景名称', dataIndex: 'name', key: 'name', width: 300 },
+      { title: '缩略图', key: 'image', width: 200 },
+      { title: '顺序', dataIndex: 'order', key: 'order', width: 200 },
+      { title: '所属关卡', dataIndex: 'levelName', key: 'levelName', width: 400 },
+      { title: '难度', key: 'difficulty', width: 300 },
+      { title: '解锁积分', dataIndex: 'requiredIntimacyScore', key: 'requiredIntimacyScore', width: 200 },
       { title: '知识点', dataIndex: 'technique', key: 'technique' },
-      { title: '缩略图', key: 'image', width: 100 },
       { title: '操作', key: 'action', width: 150 }
     ]
 
@@ -309,6 +324,15 @@ export default {
 
     const detailModalVisible = ref(false)
     const detailForm = ref({})
+
+    // 图片预览相关
+    const previewVisible = ref(false)
+    const previewImageUrl = ref('')
+
+    const handleImagePreview = (url) => {
+      previewImageUrl.value = url
+      previewVisible.value = true
+    }
 
     const fetchLevels = async () => {
       try {
@@ -577,6 +601,7 @@ export default {
     return {
       scenes, levels, allResources, selectedResourceIds, knowledgePoints, hints, columns, pagination, searchForm,
       editModalVisible, editForm, detailModalVisible, detailForm,
+      previewVisible, previewImageUrl, handleImagePreview,
       handleTableChange, handleSearch, handleReset,
       goToAdd, showEditModal, showDetailModal, handleEditOk, handleEditCancel, handleDetailCancel, deleteScene,
       filterResourceOption,
@@ -589,9 +614,20 @@ export default {
 </script>
 
 <style scoped>
-.card-title { display: flex; justify-content: space-between; align-items: center; }
-.action-buttons { display: flex; align-items: center; }
-.action-buttons .ant-btn { margin-right: 8px; }
+.card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.action-buttons .ant-btn {
+  margin-right: 8px;
+}
 
 .upload-placeholder {
   width: 200px;

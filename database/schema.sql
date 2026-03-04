@@ -64,22 +64,6 @@ CREATE TABLE IF NOT EXISTS `evaluation` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评估记录表';
 
 -- 评估维度表
-CREATE TABLE IF NOT EXISTS `evaluation_dimension` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `dimension_id` varchar(64) NOT NULL COMMENT '维度唯一ID',
-  `scene_id` varchar(64) NOT NULL COMMENT '关联场景ID',
-  `name` varchar(100) NOT NULL COMMENT '维度名称',
-  `description` text COMMENT '维度描述',
-  `max_score` decimal(5,2) DEFAULT '25.00' COMMENT '该维度满分',
-  `weight` decimal(3,2) DEFAULT '1.00' COMMENT '权重',
-  `order` int(11) DEFAULT '0' COMMENT '排序',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_dimension_id` (`dimension_id`) COMMENT '确保维度ID唯一',
-  KEY `idx_scene_id` (`scene_id`) COMMENT '按场景查询评估维度'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评估维度表';
-
 -- ==============================
 -- 知识体系表
 -- ==============================

@@ -27,14 +27,10 @@
                 <span class="relation-title">💕 关系进度</span>
                 <span class="relation-level">Lv.{{ relation?.unlockedSceneLevel || 1 }}</span>
               </div>
-              <a-progress 
-                :percent="intimacyPercent" 
-                :stroke-color="{
-                  '0%': '#ff9a9e',
-                  '100%': '#ff6b9d'
-                }"
-                trail-color="#ffe4e9"
-              />
+              <a-progress :percent="intimacyPercent" :stroke-color="{
+                '0%': '#ff9a9e',
+                '100%': '#ff6b9d'
+              }" trail-color="#ffe4e9" />
               <div class="relation-stats">
                 <div class="stat-item">
                   <span class="stat-label">亲密度</span>
@@ -53,22 +49,17 @@
 
             <a-card class="npc-description">
               <h3>关于TA</h3>
-              <p class="description-text">{{ npc?.background || '暂无介绍' }}</p>
+              <p class="description-text">{{ replacePlaceholders(npc?.background, npc) || '暂无介绍' }}</p>
               <div class="personality" v-if="npc?.personality">
                 <h4>性格特点</h4>
-                <p>{{ npc.personality }}</p>
+                <p>{{ replacePlaceholders(npc.personality, npc) }}</p>
               </div>
             </a-card>
 
             <a-card class="unlocked-scenes">
               <h3>🔓 已解锁场景</h3>
               <div class="scenes-list" v-if="unlockedScenes.length > 0">
-                <div 
-                  v-for="scene in unlockedScenes" 
-                  :key="scene.id" 
-                  class="scene-item"
-                  @click="startScene(scene)"
-                >
+                <div v-for="scene in unlockedScenes" :key="scene.id" class="scene-item" @click="startScene(scene)">
                   <div class="scene-info">
                     <span class="scene-name">{{ scene.name }}</span>
                     <span class="scene-technique">{{ scene.technique }}</span>
@@ -87,21 +78,13 @@
             <a-card class="locked-scenes">
               <h3>🔒 待解锁场景</h3>
               <div class="scenes-list" v-if="lockedScenes.length > 0">
-                <div 
-                  v-for="scene in lockedScenes" 
-                  :key="scene.id" 
-                  class="scene-item locked"
-                >
+                <div v-for="scene in lockedScenes" :key="scene.id" class="scene-item locked">
                   <div class="scene-info">
                     <span class="scene-name">{{ scene.name }}</span>
                     <span class="scene-requirement">需要 {{ scene.requiredIntimacyScore }} 亲密度</span>
                   </div>
-                  <a-progress 
-                    :percent="getUnlockProgress(scene)" 
-                    :show-info="false"
-                    size="small"
-                    style="width: 100px"
-                  />
+                  <a-progress :percent="getUnlockProgress(scene)" :show-info="false" size="small"
+                    style="width: 100px" />
                 </div>
               </div>
               <div class="no-scenes" v-else>
@@ -119,20 +102,10 @@
       </a-layout-content>
     </a-layout>
 
-    <a-modal
-      v-model:open="sceneSelectVisible"
-      title="选择场景"
-      @ok="confirmScene"
-      @cancel="sceneSelectVisible = false"
-    >
+    <a-modal v-model:open="sceneSelectVisible" title="选择场景" @ok="confirmScene" @cancel="sceneSelectVisible = false">
       <div class="scene-select-list">
-        <div 
-          v-for="scene in unlockedScenes" 
-          :key="scene.id" 
-          class="scene-select-item"
-          :class="{ selected: selectedScene?.sceneId === scene.sceneId }"
-          @click="selectedScene = scene"
-        >
+        <div v-for="scene in unlockedScenes" :key="scene.id" class="scene-select-item"
+          :class="{ selected: selectedScene?.sceneId === scene.sceneId }" @click="selectedScene = scene">
           <span class="scene-name">{{ scene.name }}</span>
           <span class="scene-technique">{{ scene.technique }}</span>
         </div>
@@ -147,7 +120,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { message } from 'ant-design-vue'
 import api from '@/api/request'
-import { getAvatarUrl } from '@/utils'
+import { getAvatarUrl, replacePlaceholders } from '@/utils'
 
 export default {
   name: 'NpcDetailView',
@@ -228,14 +201,14 @@ export default {
 
     const unlockedScenes = computed(() => {
       const currentScore = relation.value?.intimacyScore || 0
-      return allScenes.value.filter(scene => 
+      return allScenes.value.filter(scene =>
         currentScore >= (scene.requiredIntimacyScore || 0)
       )
     })
 
     const lockedScenes = computed(() => {
       const currentScore = relation.value?.intimacyScore || 0
-      return allScenes.value.filter(scene => 
+      return allScenes.value.filter(scene =>
         currentScore < (scene.requiredIntimacyScore || 0)
       )
     })

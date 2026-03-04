@@ -18,7 +18,7 @@
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'avatar'">
-            <a-avatar v-if="record.avatarUrl" :src="getImageUrl(record.avatarUrl)" :size="50" />
+            <a-avatar v-if="record.avatarUrl" :src="getImageUrl(record.avatarUrl)" :size="50" style="cursor: pointer;" @click="handleImagePreview(getImageUrl(record.avatarUrl))" />
             <a-avatar v-else :size="50" style="background-color: #1890ff">
               {{ record.name ? record.name.charAt(0) : 'N' }}
             </a-avatar>
@@ -69,7 +69,7 @@
             accept="image/*"
           >
             <div v-if="addForm.avatarUrl" class="avatar-preview">
-              <img :src="getImageUrl(addForm.avatarUrl)" alt="头像" />
+              <img :src="getImageUrl(addForm.avatarUrl)" alt="头像" @click="handleImagePreview(getImageUrl(addForm.avatarUrl))" />
               <div class="upload-mask">
                 <span>更换</span>
               </div>
@@ -124,7 +124,7 @@
             accept="image/*"
           >
             <div v-if="editForm.avatarUrl" class="avatar-preview">
-              <img :src="getImageUrl(editForm.avatarUrl)" alt="头像" />
+              <img :src="getImageUrl(editForm.avatarUrl)" alt="头像" @click="handleImagePreview(getImageUrl(editForm.avatarUrl))" />
               <div class="upload-mask">
                 <span>更换</span>
               </div>
@@ -180,7 +180,7 @@
         <a-descriptions-item label="年龄范围">{{ detailForm.ageRange || '-' }}</a-descriptions-item>
         <a-descriptions-item label="职业">{{ detailForm.occupation || '-' }}</a-descriptions-item>
         <a-descriptions-item label="头像" :span="2">
-          <a-image v-if="detailForm.avatarUrl" :src="getImageUrl(detailForm.avatarUrl)" :width="120" style="border-radius: 8px;" />
+          <a-image v-if="detailForm.avatarUrl" :src="getImageUrl(detailForm.avatarUrl)" :width="120" style="border-radius: 8px; cursor: pointer;" @click="handleImagePreview(getImageUrl(detailForm.avatarUrl))" />
           <span v-else>无头像</span>
         </a-descriptions-item>
         <a-descriptions-item label="性格特点" :span="2">{{ detailForm.personality || '-' }}</a-descriptions-item>
@@ -193,6 +193,13 @@
         </a-descriptions-item>
         <a-descriptions-item label="创建时间">{{ detailForm.createdAt }}</a-descriptions-item>
       </a-descriptions>
+    </a-modal>
+
+    <!-- 图片预览模态框 -->
+    <a-modal v-model:open="previewVisible" :footer="null" :closable="true" :mask-closable="true" width="600px">
+      <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+        <img :src="previewImageUrl" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 50%;" />
+      </div>
     </a-modal>
   </div>
 </template>
@@ -257,6 +264,16 @@ export default {
 
     const detailModalVisible = ref(false)
     const detailForm = ref({})
+
+    // 图片预览相关数据
+    const previewVisible = ref(false)
+    const previewImageUrl = ref('')
+
+    // 图片预览方法
+    const handleImagePreview = (url) => {
+      previewImageUrl.value = url
+      previewVisible.value = true
+    }
 
     const fetchNpcs = async () => {
       try {
@@ -436,6 +453,9 @@ export default {
         editForm,
         detailModalVisible,
         detailForm,
+        previewVisible,
+        previewImageUrl,
+        handleImagePreview,
         showAddModal,
         showEditModal,
         showDetailModal,

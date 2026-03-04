@@ -71,11 +71,6 @@ const routes = [
     component: () => import('@/views/TasksView.vue')
   },
   {
-    path: '/dimensions',
-    name: 'Dimensions',
-    component: () => import('@/views/DimensionsView.vue')
-  },
-  {
     path: '/knowledge-categories',
     name: 'KnowledgeCategories',
     component: () => import('@/views/KnowledgeCategoriesView.vue')

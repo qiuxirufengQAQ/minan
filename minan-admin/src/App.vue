@@ -133,12 +133,6 @@ export default {
         path: '/tasks'
       },
       {
-        key: '7',
-        icon: '📏',
-        label: '评估维度',
-        path: '/dimensions'
-      },
-      {
         key: '8',
         icon: '📝',
         label: '提示词管理',
