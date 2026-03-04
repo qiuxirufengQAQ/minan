@@ -16,7 +16,8 @@ public class IdGenerator {
     }
 
     public static String generateId(String prefix) {
-        return prefix + "_" + UUID.randomUUID().toString(true);
+        // 统一移除前缀，保持ID纯标识符属性
+        return UUID.randomUUID().toString(true);
     }
 
     public static String generateRandomString(int length) {
