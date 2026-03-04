@@ -40,10 +40,6 @@ public class PromptService {
         if (request.getSceneId() != null && !request.getSceneId().isEmpty()) {
             queryWrapper.eq(Prompt::getSceneId, request.getSceneId());
         }
-        // 如果有类型，添加查询条件
-        if (request.getType() != null && !request.getType().isEmpty()) {
-            queryWrapper.eq(Prompt::getType, request.getType());
-        }
         // 执行分页查询
         Page<Prompt> resultPage = promptMapper.selectPage(pageObj, queryWrapper);
         // 构建返回结果
@@ -64,14 +60,13 @@ public class PromptService {
         queryWrapper.eq(Prompt::getSceneId, sceneId);
         return promptMapper.selectList(queryWrapper);
     }
-    
+
     /**
-     * 根据场景ID和类型获取提示词
+     * 根据场景ID获取提示词
      */
-    public Prompt getPromptBySceneIdAndType(String sceneId, String type) {
+    public Prompt getPromptBySceneId(String sceneId) {
         LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Prompt::getSceneId, sceneId);
-        queryWrapper.eq(Prompt::getType, type);
         return promptMapper.selectOne(queryWrapper);
     }
 
@@ -90,28 +85,40 @@ public class PromptService {
         queryWrapper.eq(Prompt::getPromptId, promptId);
         return promptMapper.selectOne(queryWrapper);
     }
-    
+
     /**
      * 新增提示词
      */
-    @Transactional
     public Prompt addPrompt(Prompt prompt) {
-        // 验证关卡、场景和类型是否已存在提示词
-        LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Prompt::getLevelId, prompt.getLevelId());
-        queryWrapper.eq(Prompt::getSceneId, prompt.getSceneId());
-        queryWrapper.eq(Prompt::getType, prompt.getType());
-        Prompt existingPrompt = promptMapper.selectOne(queryWrapper);
-        if (existingPrompt != null) {
-            throw new RuntimeException("该关卡、场景和类型已存在提示词，无法重复添加");
+        // 验证参数
+        if (prompt == null) {
+            throw new IllegalArgumentException("提示词信息不能为空");
         }
-        // 生成唯一ID
-        prompt.setPromptId(IdGenerator.generatePromptId());
-        // 设置创建和更新时间
-        LocalDateTime now = LocalDateTime.now();
-        prompt.setCreatedAt(now);
-        prompt.setUpdatedAt(now);
-        // 插入数据
+        if (prompt.getSceneId() == null || prompt.getSceneId().isEmpty()) {
+            throw new IllegalArgumentException("场景ID不能为空");
+        }
+        if (prompt.getLevelId() == null || prompt.getLevelId().isEmpty()) {
+            throw new IllegalArgumentException("关卡ID不能为空");
+        }
+        if (prompt.getStartTemplate() == null || prompt.getStartTemplate().isEmpty()) {
+            throw new IllegalArgumentException("开始提示词模板不能为空");
+        }
+        
+        // 验证场景是否已经存在提示词
+        Prompt existingPrompt = getPromptBySceneId(prompt.getSceneId());
+        if (existingPrompt != null) {
+            throw new IllegalArgumentException("该场景已存在提示词，请使用编辑功能");
+        }
+        
+        // 设置提示词ID
+        String promptId = IdGenerator.generateId();
+        prompt.setPromptId(promptId);
+        
+        // 设置创建时间
+        prompt.setCreatedAt(LocalDateTime.now());
+        prompt.setUpdatedAt(LocalDateTime.now());
+        
+        // 保存提示词
         promptMapper.insert(prompt);
         return prompt;
     }
@@ -119,21 +126,28 @@ public class PromptService {
     /**
      * 更新提示词
      */
-    @Transactional
     public Prompt updatePrompt(Prompt prompt) {
-        // 验证关卡、场景和类型是否已存在其他提示词
-        LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Prompt::getLevelId, prompt.getLevelId());
-        queryWrapper.eq(Prompt::getSceneId, prompt.getSceneId());
-        queryWrapper.eq(Prompt::getType, prompt.getType());
-        queryWrapper.ne(Prompt::getId, prompt.getId());
-        Prompt existingPrompt = promptMapper.selectOne(queryWrapper);
-        if (existingPrompt != null) {
-            throw new RuntimeException("该关卡、场景和类型已存在其他提示词，无法更新");
+        // 验证参数
+        if (prompt == null) {
+            throw new IllegalArgumentException("提示词信息不能为空");
         }
+        if (prompt.getId() == null) {
+            throw new IllegalArgumentException("提示词ID不能为空");
+        }
+        if (prompt.getStartTemplate() == null || prompt.getStartTemplate().isEmpty()) {
+            throw new IllegalArgumentException("开始提示词模板不能为空");
+        }
+        
+        // 获取原提示词
+        Prompt existingPrompt = promptMapper.selectById(prompt.getId());
+        if (existingPrompt == null) {
+            throw new IllegalArgumentException("提示词不存在");
+        }
+        
         // 设置更新时间
         prompt.setUpdatedAt(LocalDateTime.now());
-        // 更新数据
+        
+        // 更新提示词
         promptMapper.updateById(prompt);
         return prompt;
     }
@@ -141,16 +155,20 @@ public class PromptService {
     /**
      * 删除提示词
      */
-    @Transactional
     public boolean deletePrompt(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("提示词ID不能为空");
+        }
         return promptMapper.deleteById(id) > 0;
     }
 
     /**
      * 根据提示词ID删除提示词
      */
-    @Transactional
     public boolean deletePromptByPromptId(String promptId) {
+        if (promptId == null || promptId.isEmpty()) {
+            throw new IllegalArgumentException("提示词ID不能为空");
+        }
         LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Prompt::getPromptId, promptId);
         return promptMapper.delete(queryWrapper) > 0;
@@ -161,6 +179,9 @@ public class PromptService {
      */
     @Transactional
     public boolean deletePromptsBySceneId(String sceneId) {
+        if (sceneId == null || sceneId.isEmpty()) {
+            throw new IllegalArgumentException("场景ID不能为空");
+        }
         LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Prompt::getSceneId, sceneId);
         return promptMapper.delete(queryWrapper) > 0;

@@ -33,14 +33,14 @@ public class Prompt {
     private String sceneId;
     
     /**
-     * 提示词类型：start（场景开始）、end（场景结束）
+     * 开始提示词模板
      */
-    private String type;
+    private String startTemplate;
 
     /**
-     * 提示词模板
+     * 结束提示词模板
      */
-    private String template;
+    private String endTemplate;
 
     /**
      * 评估维度（JSON格式）
