@@ -30,6 +30,7 @@ minan-admin/build-ssr/
 minan-admin/.nuxt/
 minan-admin/dist-ssr/
 minan-admin/*.local
+minan-admin/package-lock.json
 
 minan-frontend/node_modules/
 minan-frontend/dist/
@@ -49,6 +50,7 @@ minan-frontend/build-ssr/
 minan-frontend/.nuxt/
 minan-frontend/dist-ssr/
 minan-frontend/*.local
+minan-frontend/package-lock.json
 
 # 前端非代码资源
 minan-admin/public/uploads/

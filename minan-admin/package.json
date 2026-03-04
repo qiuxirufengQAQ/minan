@@ -9,15 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "ant-design-vue": "^4.0.8",
+    "axios": "^1.6.2",
+    "echarts": "^5.4.3",
     "vue": "^3.4.0",
     "vue-router": "^4.2.5",
-    "vuex": "^4.1.0",
-    "axios": "^1.6.2",
-    "ant-design-vue": "^4.0.8",
-    "echarts": "^5.4.3"
+    "vuex": "^4.1.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
+    "@vitejs/plugin-vue": "^5.2.4",
     "vite": "^5.0.8"
   }
 }
