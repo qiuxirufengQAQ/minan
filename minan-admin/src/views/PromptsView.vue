@@ -9,6 +9,30 @@
           </a-button>
         </div>
       </template>
+      <!-- 筛选表单 -->
+      <div class="search-form">
+        <a-form layout="inline" :model="searchForm" @submit.prevent="fetchPrompts">
+          <a-form-item label="场景">
+            <a-select v-model:value="searchForm.sceneId" placeholder="请选择场景">
+              <a-select-option value="">全部</a-select-option>
+              <a-select-option v-for="scene in scenes" :key="scene.sceneId" :value="scene.sceneId">
+                {{ scene.name }}
+              </a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item label="类型">
+            <a-select v-model:value="searchForm.type" placeholder="请选择类型">
+              <a-select-option value="">全部</a-select-option>
+              <a-select-option value="start">场景开始</a-select-option>
+              <a-select-option value="end">场景结束</a-select-option>
+            </a-select>
+          </a-form-item>
+          <a-form-item>
+            <a-button type="primary" html-type="submit">查询</a-button>
+            <a-button style="margin-left: 10px" @click="resetForm">重置</a-button>
+          </a-form-item>
+        </a-form>
+      </div>
       <a-table :columns="columns" :data-source="prompts" row-key="id" :pagination="pagination" @change="handleTableChange">
         <template #bodyCell="{ column, record, index }">
           <template v-if="column.key === 'index'">
@@ -64,10 +88,16 @@
             </a-select-option>
           </a-select>
         </a-form-item>
+        <a-form-item label="提示词类型" name="type" :rules="[{ required: true, message: '请选择提示词类型' }]">
+          <a-select v-model:value="addForm.type" placeholder="请选择提示词类型">
+            <a-select-option value="start">场景开始</a-select-option>
+            <a-select-option value="end">场景结束</a-select-option>
+          </a-select>
+        </a-form-item>
         <a-form-item label="提示词模板" name="template" :rules="[{ required: true, message: '请输入提示词模板' }]">
           <a-textarea v-model:value="addForm.template" placeholder="请输入提示词模板" rows=4 />
         </a-form-item>
-        <a-form-item label="评估维度">
+        <a-form-item v-if="addForm.type === 'end'" label="评估维度">
           <a-textarea v-model:value="addForm.evaluationDimensions" placeholder="请输入评估维度（JSON格式）" rows=3 />
         </a-form-item>
       </a-form>
@@ -89,10 +119,16 @@
             </a-select-option>
           </a-select>
         </a-form-item>
+        <a-form-item label="提示词类型" name="type" :rules="[{ required: true, message: '请选择提示词类型' }]">
+          <a-select v-model:value="editForm.type" placeholder="请选择提示词类型">
+            <a-select-option value="start">场景开始</a-select-option>
+            <a-select-option value="end">场景结束</a-select-option>
+          </a-select>
+        </a-form-item>
         <a-form-item label="提示词模板" name="template" :rules="[{ required: true, message: '请输入提示词模板' }]">
           <a-textarea v-model:value="editForm.template" placeholder="请输入提示词模板" rows=4 />
         </a-form-item>
-        <a-form-item label="评估维度">
+        <a-form-item v-if="editForm.type === 'end'" label="评估维度">
           <a-textarea v-model:value="editForm.evaluationDimensions" placeholder="请输入评估维度（JSON格式）" rows=3 />
         </a-form-item>
       </a-form>
@@ -110,10 +146,13 @@
         <a-form-item label="场景">
           <a-input v-model:value="detailForm.sceneName" />
         </a-form-item>
+        <a-form-item label="类型">
+          <a-input v-model:value="detailForm.type === 'start' ? '场景开始' : '场景结束'" />
+        </a-form-item>
         <a-form-item label="提示词模板">
           <a-textarea v-model:value="detailForm.template" rows=4 />
         </a-form-item>
-        <a-form-item label="评估维度">
+        <a-form-item v-if="detailForm.type === 'end'" label="评估维度">
           <div v-if="parsedDimensions" class="dimensions-cards">
             <div v-for="value in parsedDimensions" :key="value" class="dimension-card">
               <div class="dimension-card-body">{{ value }}</div>
@@ -154,6 +193,15 @@ export default {
         key: 'sceneId'
       },
       {
+        title: '类型',
+        dataIndex: 'type',
+        key: 'type',
+        width: 100,
+        customRender: ({ text }) => {
+          return text === 'start' ? '场景开始' : text === 'end' ? '场景结束' : text
+        }
+      },
+      {
         title: '提示词模板',
         dataIndex: 'template',
         key: 'template'
@@ -180,11 +228,18 @@ export default {
       showTotal: (total) => `共 ${total} 条记录`
     })
 
+    // 搜索表单
+    const searchForm = ref({
+      sceneId: '',
+      type: ''
+    })
+
     // 新增提示词弹框
     const addModalVisible = ref(false)
     const addForm = ref({
       sceneId: '',
       levelId: '',
+      type: 'start',
       template: '',
       evaluationDimensions: ''
     })
@@ -195,6 +250,7 @@ export default {
       promptId: '',
       sceneId: '',
       levelId: '',
+      type: 'start',
       template: '',
       evaluationDimensions: ''
     })
@@ -205,6 +261,7 @@ export default {
       promptId: '',
       sceneId: '',
       sceneName: '',
+      type: '',
       template: '',
       evaluationDimensions: ''
     })
@@ -223,7 +280,9 @@ export default {
         
         const response = await api.post('/prompts/page', {
           page: currentPage,
-          pageSize: pageSize
+          pageSize: pageSize,
+          sceneId: searchForm.value.sceneId,
+          type: searchForm.value.type
         })
         const promptData = response.data
         pagination.value.total = promptData.total || promptData.records.length
@@ -247,6 +306,16 @@ export default {
         console.error('获取所有场景列表失败:', error)
         message.error('获取所有场景列表失败')
       }
+    }
+
+    // 重置筛选表单
+    const resetForm = () => {
+      searchForm.value = {
+        sceneId: '',
+        type: ''
+      }
+      pagination.value.current = 1
+      fetchPrompts()
     }
 
     // 组件挂载时获取提示词列表和场景列表
@@ -316,6 +385,7 @@ export default {
         promptId: record.promptId,
         sceneId: record.sceneId,
         sceneName: scenes.value.find(s => s.sceneId === record.sceneId)?.name || record.sceneId,
+        type: record.type,
         template: record.template,
         evaluationDimensions: record.evaluationDimensions || ''
       }
@@ -430,6 +500,7 @@ export default {
       scenes,
       columns,
       pagination,
+      searchForm,
       addModalVisible,
       addForm,
       addFormRef,
@@ -450,7 +521,8 @@ export default {
       deletePrompt,
       handleTableChange,
       handleSceneChange,
-      parseDimensions
+      parseDimensions,
+      resetForm
     }
   }
 }
@@ -473,15 +545,10 @@ export default {
 
 .action-buttons {
   display: flex;
-  align-items: center;
 }
 
 .action-buttons .ant-btn {
   margin-right: 8px;
-}
-
-.action-buttons .ant-btn:last-child {
-  margin-right: 0;
 }
 
 .dimensions-tags {
@@ -490,28 +557,18 @@ export default {
   gap: 4px;
 }
 
-.dimensions-tags .ant-tag {
-  margin: 0;
-}
-
 .dimensions-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dimension-card {
-  border: 1px solid #e8e8e8;
+  background-color: #f5f5f5;
   border-radius: 4px;
-  overflow: hidden;
-  background: #fafafa;
-}
-
-.dimension-card-body {
-  padding: 12px;
-  color: #333;
-  font-size: 13px;
-  line-height: 1.6;
+  padding: 4px 8px;
+  font-size: 14px;
+  color: #666;
 }
 
 .dimensions-raw {

@@ -40,6 +40,10 @@ public class PromptService {
         if (request.getSceneId() != null && !request.getSceneId().isEmpty()) {
             queryWrapper.eq(Prompt::getSceneId, request.getSceneId());
         }
+        // 如果有类型，添加查询条件
+        if (request.getType() != null && !request.getType().isEmpty()) {
+            queryWrapper.eq(Prompt::getType, request.getType());
+        }
         // 执行分页查询
         Page<Prompt> resultPage = promptMapper.selectPage(pageObj, queryWrapper);
         // 构建返回结果
@@ -60,6 +64,16 @@ public class PromptService {
         queryWrapper.eq(Prompt::getSceneId, sceneId);
         return promptMapper.selectList(queryWrapper);
     }
+    
+    /**
+     * 根据场景ID和类型获取提示词
+     */
+    public Prompt getPromptBySceneIdAndType(String sceneId, String type) {
+        LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Prompt::getSceneId, sceneId);
+        queryWrapper.eq(Prompt::getType, type);
+        return promptMapper.selectOne(queryWrapper);
+    }
 
     /**
      * 根据ID获取提示词详情
@@ -76,19 +90,20 @@ public class PromptService {
         queryWrapper.eq(Prompt::getPromptId, promptId);
         return promptMapper.selectOne(queryWrapper);
     }
-
+    
     /**
      * 新增提示词
      */
     @Transactional
     public Prompt addPrompt(Prompt prompt) {
-        // 验证关卡和场景是否已存在提示词
+        // 验证关卡、场景和类型是否已存在提示词
         LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Prompt::getLevelId, prompt.getLevelId());
         queryWrapper.eq(Prompt::getSceneId, prompt.getSceneId());
+        queryWrapper.eq(Prompt::getType, prompt.getType());
         Prompt existingPrompt = promptMapper.selectOne(queryWrapper);
         if (existingPrompt != null) {
-            throw new RuntimeException("该关卡和场景已存在提示词，无法重复添加");
+            throw new RuntimeException("该关卡、场景和类型已存在提示词，无法重复添加");
         }
         // 生成唯一ID
         prompt.setPromptId(IdGenerator.generatePromptId());
@@ -106,14 +121,15 @@ public class PromptService {
      */
     @Transactional
     public Prompt updatePrompt(Prompt prompt) {
-        // 验证关卡和场景是否已存在其他提示词
+        // 验证关卡、场景和类型是否已存在其他提示词
         LambdaQueryWrapper<Prompt> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Prompt::getLevelId, prompt.getLevelId());
         queryWrapper.eq(Prompt::getSceneId, prompt.getSceneId());
+        queryWrapper.eq(Prompt::getType, prompt.getType());
         queryWrapper.ne(Prompt::getId, prompt.getId());
         Prompt existingPrompt = promptMapper.selectOne(queryWrapper);
         if (existingPrompt != null) {
-            throw new RuntimeException("该关卡和场景已存在其他提示词，无法更新");
+            throw new RuntimeException("该关卡、场景和类型已存在其他提示词，无法更新");
         }
         // 设置更新时间
         prompt.setUpdatedAt(LocalDateTime.now());

@@ -203,14 +203,16 @@ CREATE TABLE IF NOT EXISTS `prompt` (
   `prompt_id` varchar(64) NOT NULL COMMENT '提示词唯一ID',
   `level_id` varchar(64) NOT NULL COMMENT '关联关卡ID',
   `scene_id` varchar(64) NOT NULL COMMENT '关联场景ID',
+  `type` varchar(20) NOT NULL COMMENT '提示词类型：start（场景开始）、end（场景结束）',
   `template` text NOT NULL COMMENT '提示词模板',
-  `evaluation_dimensions` json DEFAULT NULL COMMENT '评估维度',
+  `evaluation_dimensions` json DEFAULT NULL COMMENT '评估维度（仅end类型需要）',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_prompt_id` (`prompt_id`) COMMENT '确保提示词ID唯一',
   KEY `idx_scene_id` (`scene_id`) COMMENT '按场景查询提示词',
-  KEY `idx_level_id` (`level_id`) COMMENT '按关卡查询提示词'
+  KEY `idx_level_id` (`level_id`) COMMENT '按关卡查询提示词',
+  KEY `idx_type` (`type`) COMMENT '按类型查询提示词'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提示词表';
 
 -- 场景表

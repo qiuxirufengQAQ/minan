@@ -31,4 +31,9 @@ public class PromptQueryRequest {
      * 场景ID（可选）
      */
     private String sceneId;
+    
+    /**
+     * 提示词类型：start（场景开始）、end（场景结束）（可选）
+     */
+    private String type;
 }
