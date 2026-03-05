@@ -42,3 +42,8 @@ mybatis-plus:
 logging:
   level:
     com.minan.game: debug
+
+# AES 加密配置（生产环境请通过环境变量覆盖）
+app:
+  aes:
+    key: ${AES_ENCRYPTION_KEY:MinanDefaultKey2025!@#$}

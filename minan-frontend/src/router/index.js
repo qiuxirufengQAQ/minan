@@ -77,6 +77,18 @@ const routes = [
     name: 'Achievements',
     component: () => import('@/views/AchievementsView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/403',
+    name: 'Forbidden',
+    component: () => import('@/views/ForbiddenView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { requiresAuth: false }
   }
 ]
 
@@ -87,6 +99,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const isLoggedIn = store.getters['user/isLoggedIn']
+  const userRole = store.getters['user/role'] || 'user' // 默认角色为 user
   
   if (to.meta.requiresAuth && !isLoggedIn) {
     next({
@@ -95,6 +108,14 @@ router.beforeEach((to, from, next) => {
     })
   } else if ((to.path === '/login' || to.path === '/register') && isLoggedIn) {
     next('/home')
+  } else if (to.meta.requiresAuth && isLoggedIn) {
+    // 检查角色权限
+    if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+      // 无权限访问，重定向到 403 页面或首页
+      next({ path: '/403', query: { redirect: to.fullPath } })
+    } else {
+      next()
+    }
   } else {
     next()
   }
