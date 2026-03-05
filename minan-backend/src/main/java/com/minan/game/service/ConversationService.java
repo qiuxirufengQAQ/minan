@@ -53,21 +53,32 @@ public class ConversationService {
     @Transactional
     public ConversationStartResult startConversation(Long userId, String sceneId) {
         try {
-            // 1. 加载场景信息（NPC 从场景默认配置获取）
+            // 1. 加载场景信息
             Scene scene = sceneMapper.selectById(sceneId);
             if (scene == null) {
                 throw new IllegalArgumentException("场景不存在");
             }
             
-            // 使用场景默认 NPC
-            String npcId = scene.getDefaultNpcId();
+            // 从 resourceIds 解析第一个 NPC ID（格式：NPC_001,NPC_002,...）
+            String npcId = null;
+            if (scene.getResourceIds() != null && !scene.getResourceIds().isEmpty()) {
+                String[] resourceArray = scene.getResourceIds().split(",");
+                for (String resource : resourceArray) {
+                    if (resource.trim().startsWith("NPC_")) {
+                        npcId = resource.trim();
+                        break;
+                    }
+                }
+            }
+            
+            // 如果没有配置 NPC，使用默认 NPC（需要数据库中有 NPC_DEFAULT 记录）
             if (npcId == null) {
-                throw new IllegalArgumentException("场景未配置默认 NPC");
+                npcId = "NPC_DEFAULT";
             }
             
             NpcCharacter npc = npcCharacterMapper.selectByNpcId(npcId);
             if (npc == null) {
-                throw new IllegalArgumentException("NPC 不存在");
+                throw new IllegalArgumentException("NPC 不存在：" + npcId);
             }
 
             // 2. 生成对话 ID
