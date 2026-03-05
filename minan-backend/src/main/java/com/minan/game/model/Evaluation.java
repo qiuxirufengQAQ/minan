@@ -63,6 +63,46 @@ public class Evaluation {
     private Integer attemptNumber;
 
     /**
+     * 对话会话 ID
+     */
+    private String conversationId;
+
+    /**
+     * 对话总轮次
+     */
+    private Integer conversationRounds;
+
+    /**
+     * AI 教练详细反馈 (JSON)
+     */
+    private String aiFeedbackJson;
+
+    /**
+     * 各维度得分 (JSON)
+     */
+    private String dimensionScores;
+
+    /**
+     * 知识点推荐列表 (JSON)
+     */
+    private String knowledgeRecommendations;
+
+    /**
+     * 优点列表 (JSON)
+     */
+    private String strengths;
+
+    /**
+     * 改进建议列表 (JSON)
+     */
+    private String suggestions;
+
+    /**
+     * 示范对话
+     */
+    private String exampleDialogue;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;

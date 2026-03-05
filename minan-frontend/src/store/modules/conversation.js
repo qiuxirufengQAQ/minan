@@ -1,50 +1,302 @@
 /**
  * 对话状态管理
  * 路径：src/store/modules/conversation.js
- * 设计说明：仅框架设计，实际 API 调用留空
  */
+import api from '@/api/request'
+
 export default {
   namespaced: true,
+  
   state: {
+    // 当前对话信息
     conversationId: null,
+    sceneId: null,
+    npcId: null,
+    
+    // 轮次信息
     currentRound: 0,
     maxRounds: 5,
+    
+    // 对话状态
     isCompleted: false,
-    dialogueHistory: [] // { role: 'user'|'npc', content: string, emotionTag?: string }
+    isLoading: false,
+    
+    // 对话历史
+    dialogueHistory: [],
+    
+    // NPC 信息
+    npcName: '',
+    npcAvatar: '',
+    
+    // 场景信息
+    sceneName: '',
+    
+    // 评估结果
+    evaluationResult: null
   },
-  mutations: {
-    SET_CONVERSATION_ID(state, id) {
-      state.conversationId = id;
+  
+  getters: {
+    // 是否可以进行对话
+    canSend(state) {
+      return !state.isCompleted && !state.isLoading && state.currentRound < state.maxRounds
     },
-    INCREMENT_ROUND(state) {
-      state.currentRound++;
+    
+    // 剩余轮次
+    remainingRounds(state) {
+      return state.maxRounds - state.currentRound
     },
-    ADD_MESSAGE(state, message) {
-      state.dialogueHistory.push(message);
-    },
-    SET_COMPLETED(state) {
-      state.isCompleted = true;
+    
+    // 轮次进度（百分比）
+    roundProgress(state) {
+      return (state.currentRound / state.maxRounds) * 100
     }
   },
-  actions: {
-    // 框架方法：实际调用留空
-    async start({ commit }, sceneId) {
-      // 调用 API 获取 conversationId
-      commit('SET_CONVERSATION_ID', 'conv_abc');
+  
+  mutations: {
+    // 设置对话信息
+    SET_CONVERSATION_INFO(state, info) {
+      state.conversationId = info.conversationId
+      state.sceneId = info.sceneId
+      state.npcId = info.npcId
+      state.currentRound = info.currentRound
+      state.maxRounds = info.maxRounds
+      state.npcName = info.npcName || ''
+      state.sceneName = info.sceneName || ''
     },
-    async send({ commit, state }, userInput) {
-      // 1. 调用 API 发送消息
-      // 2. 更新状态
-      commit('ADD_MESSAGE', { role: 'user', content: userInput });
-      commit('ADD_MESSAGE', { 
-        role: 'npc', 
-        content: 'NPC 回复占位符', 
-        emotionTag: '开心' 
-      });
-      commit('INCREMENT_ROUND');
-      // 检查是否完成
-      if (state.currentRound >= state.maxRounds) {
-        commit('SET_COMPLETED');
+    
+    // 添加对话记录
+    ADD_DIALOGUE_RECORD(state, record) {
+      state.dialogueHistory.push(record)
+    },
+    
+    // 更新轮次
+    UPDATE_ROUND(state, { currentRound, isCompleted }) {
+      state.currentRound = currentRound
+      state.isCompleted = isCompleted || false
+    },
+    
+    // 设置加载状态
+    SET_LOADING(state, loading) {
+      state.isLoading = loading
+    },
+    
+    // 重置对话
+    RESET_CONVERSATION(state) {
+      state.conversationId = null
+      state.sceneId = null
+      state.npcId = null
+      state.currentRound = 0
+      state.maxRounds = 5
+      state.isCompleted = false
+      state.isLoading = false
+      state.dialogueHistory = []
+      state.npcName = ''
+      state.sceneName = ''
+      state.evaluationResult = null
+    },
+    
+    // 设置评估结果
+    SET_EVALUATION_RESULT(state, result) {
+      state.evaluationResult = result
+    }
+  },
+  
+  actions: {
+    /**
+     * 开始对话
+     * 注意：不再传 userId 和 npcId，后端从 SaToken Session 和场景配置获取
+     */
+    async startConversation({ commit }, { sceneId }) {
+      try {
+        commit('SET_LOADING', true)
+        
+        // ✅ 只传 sceneId，后端自动从场景配置获取默认 NPC
+        const response = await api.post('/conversation/start', {
+          sceneId
+        })
+        
+        if (response.code === 200) {
+          const data = response.data
+          
+          // 保存对话信息
+          commit('SET_CONVERSATION_INFO', {
+            conversationId: data.conversationId,
+            sceneId,
+            npcId: data.npcId || null, // 从响应中获取
+            currentRound: data.currentRound,
+            maxRounds: data.maxRounds,
+            npcName: data.npcName,
+            sceneName: data.sceneName
+          })
+          
+          // 添加 NPC 欢迎语到对话历史
+          if (data.npcGreeting) {
+            commit('ADD_DIALOGUE_RECORD', {
+              roundNumber: 0,
+              userInput: '',
+              npcResponse: data.npcGreeting,
+              isNpc: true
+            })
+          }
+          
+          return { success: true, data }
+        } else {
+          return { success: false, message: response.message }
+        }
+        
+      } catch (error) {
+        console.error('开始对话失败:', error)
+        return { success: false, message: error.message }
+        
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+    
+    /**
+     * 发送消息
+     * 注意：不再传 userId，后端从 SaToken Session 获取
+     */
+    async sendMessage({ commit, state }, userInput) {
+      try {
+        if (!state.conversationId) {
+          throw new Error('对话未开始')
+        }
+        
+        commit('SET_LOADING', true)
+        
+        // 先将用户消息添加到历史（乐观更新）
+        commit('ADD_DIALOGUE_RECORD', {
+          roundNumber: state.currentRound + 1,
+          userInput,
+          npcResponse: '',
+          isNpc: false
+        })
+        
+        // ✅ 不再传 userId
+        const response = await api.post('/conversation/send', {
+          conversationId: state.conversationId,
+          userInput
+        })
+        
+        if (response.code === 200) {
+          const data = response.data
+          
+          // 更新 NPC 回复（更新最后一条记录）
+          const history = [...state.dialogueHistory]
+          const lastRecord = history[history.length - 1]
+          if (lastRecord) {
+            lastRecord.npcResponse = data.npcResponse
+          }
+          state.dialogueHistory = history
+          
+          // 更新轮次
+          commit('UPDATE_ROUND', {
+            currentRound: data.currentRound,
+            isCompleted: data.isCompleted
+          })
+          
+          return { success: true, data }
+        } else {
+          // API 失败，移除刚才添加的用户消息
+          state.dialogueHistory.pop()
+          return { success: false, message: response.message }
+        }
+        
+      } catch (error) {
+        console.error('发送消息失败:', error)
+        
+        // 失败时移除刚才添加的用户消息
+        if (state.dialogueHistory.length > 0) {
+          const lastRecord = state.dialogueHistory[state.dialogueHistory.length - 1]
+          if (lastRecord && !lastRecord.npcResponse) {
+            state.dialogueHistory.pop()
+          }
+        }
+        
+        return { success: false, message: error.message }
+        
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+    
+    /**
+     * 结束对话并评估
+     */
+    async endConversation({ commit, state, rootGetters }) {
+      try {
+        if (!state.conversationId) {
+          throw new Error('对话未开始')
+        }
+        
+        commit('SET_LOADING', true)
+        
+        // 1. 结束对话
+        const endResult = await api.post('/conversation/end', {
+          conversationId: state.conversationId
+        })
+        
+        if (!endResult.success) {
+          commit('SET_LOADING', false)
+          return endResult
+        }
+        
+        // 2. 调用教练评估（后端从 Session 获取 userId）
+        const evalResponse = await api.post('/coach/evaluate', {
+          conversationId: state.conversationId
+        })
+        
+        if (evalResponse.code === 200) {
+          const evalData = evalResponse.data
+          
+          // 保存评估结果
+          commit('SET_EVALUATION_RESULT', {
+            evaluationId: evalData.evaluationId,
+            totalScore: evalData.totalScore,
+            dimensionScores: evalData.dimensionScores,
+            strengths: evalData.strengths,
+            suggestions: evalData.suggestions,
+            exampleDialogue: evalData.exampleDialogue,
+            knowledgeRecommendations: evalData.knowledgeRecommendations
+          })
+          
+          // 标记对话完成
+          commit('UPDATE_ROUND', {
+            currentRound: state.currentRound,
+            isCompleted: true
+          })
+          
+          return { success: true, data: evalData }
+        } else {
+          return { success: false, message: evalResponse.message }
+        }
+        
+      } catch (error) {
+        console.error('结束对话失败:', error)
+        return { success: false, message: error.message }
+        
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+    
+    /**
+     * 获取对话历史
+     */
+    async getConversationHistory({ commit }, conversationId) {
+      try {
+        const response = await api.get(`/conversation/history/${conversationId}`)
+        
+        if (response.code === 200) {
+          return { success: true, data: response.data }
+        } else {
+          return { success: false, message: response.message }
+        }
+        
+      } catch (error) {
+        console.error('获取对话历史失败:', error)
+        return { success: false, message: error.message }
       }
     }
   }

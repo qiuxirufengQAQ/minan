@@ -317,6 +317,7 @@ export default {
     const startConversation = async (npc) => {
       loading.value = true
       try {
+        // ✅ 不再传 userId，后端从 SaToken Session 获取
         const result = await store.dispatch('conversation/startConversation', {
           sceneId: scene.value.sceneId,
           npcId: npc.npcId
@@ -366,7 +367,7 @@ export default {
       }
     }
 
-    // 结束对话
+    // 结束对话（包含评估）
     const endConversation = async () => {
       if (!conversationState.value.conversationId) {
         message.warning('对话未开始')
@@ -375,43 +376,21 @@ export default {
 
       loading.value = true
       try {
-        // 1. 结束对话
-        const endResult = await store.dispatch('conversation/endConversation')
-        if (!endResult.success) {
-          message.error(endResult.message || '结束对话失败')
-          return
-        }
-
-        // 2. 调用教练评估
-        const evalResponse = await api.post('/coach/evaluate', {
-          conversationId: conversationState.value.conversationId,
-          userId: userId.value
-        })
-
-        if (evalResponse.code === 200) {
-          // 3. 保存评估结果到 store
-          const evalData = evalResponse.data
-          store.commit('conversation/SET_EVALUATION_RESULT', {
-            evaluationId: evalData.evaluationId,
-            totalScore: evalData.totalScore,
-            dimensionScores: evalData.dimensionScores,
-            strengths: evalData.strengths,
-            suggestions: evalData.suggestions,
-            exampleDialogue: evalData.exampleDialogue,
-            knowledgeRecommendations: evalData.knowledgeRecommendations
-          })
-
+        // ✅ 调用 store 的 endConversation action（已包含评估逻辑）
+        const result = await store.dispatch('conversation/endConversation')
+        
+        if (result.success) {
           message.success('评估完成')
-
-          // 4. 跳转到评估报告页
+          
+          // 跳转到评估报告页
           router.push({
             name: 'CoachReport',
-            params: { evaluationId: evalData.evaluationId }
+            params: { evaluationId: result.data.evaluationId }
           })
         } else {
-          message.error(evalResponse.message || '评估失败')
+          message.error(result.message || '评估失败')
         }
-
+        
       } catch (error) {
         console.error('结束对话失败:', error)
         message.error('结束对话失败：' + error.message)
