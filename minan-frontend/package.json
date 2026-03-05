@@ -1,7 +1,7 @@
 {
   "name": "minan-frontend",
   "version": "1.0.0",
-  "description": "谜男迷宫游戏前端应用",
+  "description": "恋爱迷宫游戏前端应用",
   "type": "module",
   "scripts": {
     "dev": "vite",
