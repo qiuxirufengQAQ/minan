@@ -7,6 +7,7 @@ import com.minan.game.mapper.SceneMapper;
 import com.minan.game.model.ConversationRecord;
 import com.minan.game.model.NpcCharacter;
 import com.minan.game.model.Scene;
+import com.minan.game.utils.AesEncryptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,9 @@ public class ConversationService {
 
     @Autowired
     private AiConfigService aiConfigService;
+
+    @Autowired
+    private AesEncryptor aesEncryptor;
 
     // 内存中的对话上下文（生产环境建议用 Redis）
     private final Map<String, ConversationContext> conversationContexts = new HashMap<>();
@@ -88,7 +92,7 @@ public class ConversationService {
             // 5. 生成 NPC 欢迎语
             String greeting = generateGreeting(npc, scene);
 
-            // 6. 保存第一条记录（NPC 欢迎语）
+            // 6. 保存第一条记录（NPC 欢迎语）- NPC 回复需要加密
             ConversationRecord greetingRecord = new ConversationRecord();
             greetingRecord.setRecordId(IdUtil.fastSimpleUUID());
             greetingRecord.setConversationId(conversationId);
@@ -96,8 +100,8 @@ public class ConversationService {
             greetingRecord.setUserId(userId);
             greetingRecord.setNpcId(npcId);
             greetingRecord.setRoundNumber(0);
-            greetingRecord.setUserInput("");
-            greetingRecord.setNpcResponse(greeting);
+            greetingRecord.setUserInput(""); // 空字符串不需要加密
+            greetingRecord.setNpcResponse(aesEncryptor.encrypt(greeting)); // 加密 NPC 回复
             greetingRecord.setCreatedAt(LocalDateTime.now());
             conversationRecordMapper.insert(greetingRecord);
 
@@ -163,7 +167,7 @@ public class ConversationService {
             context.setCurrentRound(context.getCurrentRound() + 1);
             int currentRound = context.getCurrentRound();
 
-            // 7. 保存对话记录
+            // 7. 保存对话记录 - 用户输入和 AI 回复都需要加密
             ConversationRecord record = new ConversationRecord();
             record.setRecordId(IdUtil.fastSimpleUUID());
             record.setConversationId(conversationId);
@@ -171,8 +175,8 @@ public class ConversationService {
             record.setUserId(context.getUserId());
             record.setNpcId(context.getNpcId());
             record.setRoundNumber(currentRound);
-            record.setUserInput(userInput);
-            record.setNpcResponse(npcResponse);
+            record.setUserInput(aesEncryptor.encrypt(userInput)); // 加密用户输入
+            record.setNpcResponse(aesEncryptor.encrypt(npcResponse)); // 加密 AI 回复
             record.setAiModel(aiConfigService.getNpcModel());
             record.setCreatedAt(LocalDateTime.now());
             conversationRecordMapper.insert(record);
@@ -202,10 +206,20 @@ public class ConversationService {
     }
 
     /**
-     * 获取对话历史
+     * 获取对话历史（自动解密）
      */
     public List<ConversationRecord> getConversationHistory(String conversationId) {
-        return conversationRecordMapper.selectByConversationId(conversationId);
+        List<ConversationRecord> records = conversationRecordMapper.selectByConversationId(conversationId);
+        // 解密每条记录的内容
+        for (ConversationRecord record : records) {
+            if (record.getUserInput() != null && !record.getUserInput().isEmpty()) {
+                record.setUserInput(aesEncryptor.decrypt(record.getUserInput()));
+            }
+            if (record.getNpcResponse() != null && !record.getNpcResponse().isEmpty()) {
+                record.setNpcResponse(aesEncryptor.decrypt(record.getNpcResponse()));
+            }
+        }
+        return records;
     }
 
     /**
