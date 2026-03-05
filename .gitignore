@@ -137,3 +137,5 @@ gulpfile.js
 webpack.config.js
 rollup.config.js
 vite.config.js
+.env
+*.log
