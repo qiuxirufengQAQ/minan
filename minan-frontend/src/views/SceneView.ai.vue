@@ -512,7 +512,175 @@ export default {
 </script>
 
 <style scoped>
-/* 复用原有样式，添加新样式 */
+.scene-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  -webkit-overflow-scrolling: touch;
+}
+
+.full-spin {
+  min-height: 100vh;
+}
+
+.npc-select-section {
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: linear-gradient(180deg, #e6f3ff 0%, #f0f7ff 100%);
+}
+
+.select-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.select-header h2 {
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.select-header p {
+  font-size: 16px;
+  color: #666;
+}
+
+.npc-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.npc-select-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.npc-select-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(255, 107, 157, 0.2);
+}
+
+.npc-select-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.npc-select-card .ant-avatar {
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.npc-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.npc-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.npc-occupation {
+  font-size: 14px;
+  color: #999;
+}
+
+.npc-intimacy {
+  font-size: 14px;
+  color: #ff6b9d;
+}
+
+/* 聊天容器 */
+.chat-container {
+  position: relative;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.chat-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.25) 100%);
+  backdrop-filter: blur(3px);
+}
+
+.chat-main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* 头部 */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.npc-avatar-wrapper {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  z-index: 10;
+}
+
+.npc-avatar-wrapper:hover {
+  transform: scale(1.05);
+}
+
+.chat-npc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-npc-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.chat-npc-status {
+  font-size: 12px;
+  color: #999;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 轮次计数器 */
 .round-counter {
   display: flex;
   align-items: center;
@@ -521,6 +689,7 @@ export default {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 20px;
   font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .round-hearts {
@@ -537,9 +706,266 @@ export default {
   border: none;
 }
 
+.end-btn:disabled {
+  background: #d9d9d9;
+  border: none;
+}
+
+/* 对话消息区域 */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: transparent;
+}
+
+.scene-hint-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hint-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.hint-content {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.hint-technique {
+  font-size: 13px;
+  color: #1890ff;
+  padding: 8px 12px;
+  background: #e6f7ff;
+  border-radius: 8px;
+}
+
+.technique-label {
+  font-weight: 500;
+}
+
+/* 对话消息 */
+.chat-message {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+.chat-message.user-message {
+  flex-direction: row-reverse;
+}
+
+.message-avatar-wrapper {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.message-avatar-wrapper:hover {
+  transform: scale(1.1);
+}
+
+.chat-message .ant-avatar {
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.message-bubble {
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.npc-message .message-bubble {
+  background: rgba(255, 255, 255, 0.95);
+  border-top-left-radius: 4px;
+}
+
+.user-message .message-bubble {
+  background: #95ec69;
+  border-top-right-radius: 4px;
+}
+
+.message-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #333;
+  word-break: break-word;
+}
+
+/* 输入区域 */
+.chat-input-area {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.98);
+  border-top: 1px solid #e8e8e8;
+  position: relative;
+  z-index: 10;
+}
+
+.quick-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.quick-option {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e8e8e8;
+}
+
+.quick-option:hover {
+  background: #e6f7ff;
+  border-color: #1890ff;
+}
+
+.input-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.chat-textarea {
+  flex: 1;
+  border-radius: 24px;
+  border: 1px solid #e8e8e8;
+  padding: 10px 16px;
+  font-size: 16px;
+  background: #f5f5f5;
+  resize: none;
+  outline: none;
+  min-height: 40px;
+  max-height: 120px;
+  line-height: 1.5;
+}
+
+.chat-textarea:focus {
+  background: white;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.chat-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.send-button {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.send-button:disabled {
+  background: #d9d9d9;
+}
+
 .completed-hint {
   margin-top: 12px;
 }
 
-/* 其他样式复用原有 SceneView.vue 的样式 */
+/* NPC 头像预览 */
+.npc-avatar-modal .ant-modal-content {
+  background: transparent;
+  box-shadow: none;
+}
+
+.npc-avatar-modal .ant-modal-close {
+  color: #fff;
+  top: -40px;
+  right: 0;
+}
+
+.npc-preview-container {
+  position: relative;
+  max-width: 85vw;
+  max-height: 85vh;
+}
+
+.npc-preview-image {
+  max-width: 85vw;
+  max-height: 70vh;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  object-fit: contain;
+  display: block;
+}
+
+.npc-preview-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+  border-radius: 0 0 16px 16px;
+  padding: 80px 20px 20px;
+  color: #fff;
+}
+
+.npc-basic-info {
+  text-align: center;
+}
+
+.npc-name {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+}
+
+.npc-meta {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .chat-header {
+    padding: 10px 12px;
+  }
+
+  .chat-npc-name {
+    font-size: 15px;
+  }
+
+  .round-counter {
+    font-size: 12px;
+    padding: 2px 8px;
+  }
+
+  .message-bubble {
+    max-width: 80%;
+  }
+
+  .npc-preview-image {
+    max-width: 90vw;
+    max-height: 65vh;
+  }
+
+  .npc-name {
+    font-size: 24px;
+  }
+}
 </style>
