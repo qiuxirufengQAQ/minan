@@ -71,6 +71,13 @@
             <version>1.38.0</version>
         </dependency>
 
+        <!-- 阿里云百炼 SDK（通义千问 AI） -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>dashscope-sdk-java</artifactId>
+            <version>2.16.0</version>
+        </dependency>
+
         <!-- Spring Boot Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
