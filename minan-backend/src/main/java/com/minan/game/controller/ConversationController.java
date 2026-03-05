@@ -1,12 +1,16 @@
 package com.minan.game.controller;
 
 import com.minan.game.dto.Response;
+import com.minan.game.dto.SendMessageRequest;
+import com.minan.game.dto.StartConversationRequest;
 import com.minan.game.model.ConversationRecord;
 import com.minan.game.service.ConversationService;
+import cn.dev33.satoken.stp.StpUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -31,19 +35,17 @@ public class ConversationController {
     @PostMapping("/start")
     @ApiOperation("开始对话")
     public Response<Map<String, Object>> startConversation(
-        @RequestBody Map<String, String> request
+        @RequestBody @Validated StartConversationRequest request
     ) {
         try {
-            String userId = request.get("userId");
-            String sceneId = request.get("sceneId");
-            String npcId = request.get("npcId");
-
-            if (userId == null || sceneId == null || npcId == null) {
-                return Response.error("缺少必要参数");
-            }
+            // 使用当前登录用户 ID，而非前端传入
+            Long currentUserId = StpUtil.getLoginIdAsLong();
+            String sceneId = request.getSceneId();
+            
+            log.info("用户 {} 开始场景 {} 的对话", currentUserId, sceneId);
 
             ConversationService.ConversationStartResult result = 
-                conversationService.startConversation(userId, sceneId, npcId);
+                conversationService.startConversation(currentUserId, sceneId);
 
             Map<String, Object> data = new HashMap<>();
             data.put("conversationId", result.getConversationId());
@@ -55,6 +57,9 @@ public class ConversationController {
 
             return Response.success(data);
 
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误：{}", e.getMessage());
+            return Response.error("参数错误：" + e.getMessage());
         } catch (Exception e) {
             log.error("开始对话失败", e);
             return Response.error("开始对话失败：" + e.getMessage());
@@ -67,18 +72,22 @@ public class ConversationController {
     @PostMapping("/send")
     @ApiOperation("发送消息")
     public Response<Map<String, Object>> sendMessage(
-        @RequestBody Map<String, String> request
+        @PathVariable String conversationId,
+        @RequestBody @Validated SendMessageRequest request
     ) {
         try {
-            String conversationId = request.get("conversationId");
-            String userInput = request.get("userInput");
-
-            if (conversationId == null || userInput == null) {
-                return Response.error("缺少必要参数");
+            // 验证当前用户是否有权操作此会话
+            Long currentUserId = StpUtil.getLoginIdAsLong();
+            
+            // 检查会话归属
+            if (!conversationService.isOwner(conversationId, currentUserId)) {
+                return Response.error("无权操作此对话");
             }
 
+            log.info("用户 {} 在会话 {} 发送消息", currentUserId, conversationId);
+
             ConversationService.ConversationSendResult result = 
-                conversationService.sendMessage(conversationId, userInput);
+                conversationService.sendMessage(conversationId, request.getContent());
 
             Map<String, Object> data = new HashMap<>();
             data.put("conversationId", result.getConversationId());
@@ -89,6 +98,9 @@ public class ConversationController {
 
             return Response.success(data);
 
+        } catch (IllegalArgumentException e) {
+            log.warn("参数错误：{}", e.getMessage());
+            return Response.error("参数错误：" + e.getMessage());
         } catch (Exception e) {
             log.error("发送消息失败", e);
             return Response.error("发送消息失败：" + e.getMessage());
@@ -104,6 +116,13 @@ public class ConversationController {
         @PathVariable String conversationId
     ) {
         try {
+            Long currentUserId = StpUtil.getLoginIdAsLong();
+            
+            // 检查会话归属
+            if (!conversationService.isOwner(conversationId, currentUserId)) {
+                return Response.error("无权查看此对话");
+            }
+
             List<ConversationRecord> history = 
                 conversationService.getConversationHistory(conversationId);
             return Response.success(history);
@@ -117,17 +136,21 @@ public class ConversationController {
     /**
      * 结束对话
      */
-    @PostMapping("/end")
+    @PostMapping("/end/{conversationId}")
     @ApiOperation("结束对话")
     public Response<Void> endConversation(
-        @RequestBody Map<String, String> request
+        @PathVariable String conversationId
     ) {
         try {
-            String conversationId = request.get("conversationId");
-            if (conversationId == null) {
-                return Response.error("缺少必要参数");
+            Long currentUserId = StpUtil.getLoginIdAsLong();
+            
+            // 检查会话归属
+            if (!conversationService.isOwner(conversationId, currentUserId)) {
+                return Response.error("无权操作此对话");
             }
 
+            log.info("用户 {} 结束会话 {}", currentUserId, conversationId);
+            
             conversationService.endConversation(conversationId);
             return Response.success(null);
 

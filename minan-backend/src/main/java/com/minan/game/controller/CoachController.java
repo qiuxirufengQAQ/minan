@@ -1,5 +1,6 @@
 package com.minan.game.controller;
 
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.IdUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minan.game.dto.Response;
@@ -11,6 +12,7 @@ import com.minan.game.model.Evaluation;
 import com.minan.game.model.Scene;
 import com.minan.game.service.AiCoachService;
 import com.minan.game.service.AiCoachService.EvaluationResult;
+import com.minan.game.service.ConversationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,9 @@ public class CoachController {
     @Autowired
     private SceneMapper sceneMapper;
 
+    @Autowired
+    private ConversationService conversationService;
+
     /**
      * 评估对话
      */
@@ -55,10 +60,17 @@ public class CoachController {
     ) {
         try {
             String conversationId = request.get("conversationId");
-            String userId = request.get("userId");
+            
+            if (conversationId == null) {
+                return Response.error("缺少会话 ID");
+            }
 
-            if (conversationId == null || userId == null) {
-                return Response.error("缺少必要参数");
+            // 使用当前登录用户
+            Long currentUserId = StpUtil.getLoginIdAsLong();
+
+            // 权限校验：检查是否是对话所有者
+            if (!conversationService.isOwner(conversationId, currentUserId)) {
+                return Response.error("无权评估此对话");
             }
 
             // 1. 获取对话记录
@@ -79,7 +91,7 @@ public class CoachController {
             // 4. 保存评估结果
             String npcId = records.get(0).getNpcId();
             Evaluation evaluation = saveEvaluationResult(
-                userId, sceneId, npcId, conversationId, records.size(), result
+                String.valueOf(currentUserId), sceneId, npcId, conversationId, records.size(), result
             );
 
             // 5. 返回结果

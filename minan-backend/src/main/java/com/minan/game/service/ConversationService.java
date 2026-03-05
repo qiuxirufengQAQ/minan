@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 对话服务
@@ -46,14 +47,23 @@ public class ConversationService {
      * 开始对话
      */
     @Transactional
-    public ConversationStartResult startConversation(String userId, String sceneId, String npcId) {
+    public ConversationStartResult startConversation(Long userId, String sceneId) {
         try {
-            // 1. 加载场景和 NPC 信息
+            // 1. 加载场景信息（NPC 从场景默认配置获取）
             Scene scene = sceneMapper.selectById(sceneId);
+            if (scene == null) {
+                throw new IllegalArgumentException("场景不存在");
+            }
+            
+            // 使用场景默认 NPC
+            String npcId = scene.getDefaultNpcId();
+            if (npcId == null) {
+                throw new IllegalArgumentException("场景未配置默认 NPC");
+            }
+            
             NpcCharacter npc = npcCharacterMapper.selectByNpcId(npcId);
-
-            if (scene == null || npc == null) {
-                throw new IllegalArgumentException("场景或 NPC 不存在");
+            if (npc == null) {
+                throw new IllegalArgumentException("NPC 不存在");
             }
 
             // 2. 生成对话 ID
@@ -67,7 +77,7 @@ public class ConversationService {
             // 4. 保存对话上下文
             ConversationContext context = new ConversationContext();
             context.setConversationId(conversationId);
-            context.setUserId(userId);
+            context.setUserId(String.valueOf(userId));
             context.setSceneId(sceneId);
             context.setNpcId(npcId);
             context.setCurrentRound(0);
@@ -93,6 +103,28 @@ public class ConversationService {
 
             log.info("对话开始：conversationId={}, userId={}, sceneId={}, npcId={}", 
                 conversationId, userId, sceneId, npcId);
+        } catch (IllegalArgumentException e) {
+            throw e; // 保留参数错误
+        } catch (Exception e) {
+            log.error("开始对话失败", e);
+            throw new RuntimeException("开始对话失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 检查用户是否是对话所有者
+     */
+    public boolean isOwner(String conversationId, Long userId) {
+        ConversationContext context = conversationContexts.get(conversationId);
+        if (context == null) {
+            // 尝试从数据库查询
+            List<ConversationRecord> records = conversationRecordMapper.selectByConversationId(conversationId);
+            if (records.isEmpty()) {
+                return false;
+            }
+            return String.valueOf(userId).equals(records.get(0).getUserId());
+        }
+        return String.valueOf(userId).equals(context.getUserId());
 
             // 7. 返回结果
             ConversationStartResult result = new ConversationStartResult();
