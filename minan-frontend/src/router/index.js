@@ -55,6 +55,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/scene-ai/:id',
+    name: 'SceneAI',
+    component: () => import('@/views/SceneView.ai.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/coach-report/:evaluationId?',
+    name: 'CoachReport',
+    component: () => import('@/views/CoachReportView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/user-center',
     name: 'UserCenter',
     component: () => import('@/views/UserCenterView.vue'),

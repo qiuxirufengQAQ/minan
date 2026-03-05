@@ -30,6 +30,8 @@ import java.util.Map;
 @Api(tags = "AI 教练评估接口")
 public class CoachController {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private AiCoachService aiCoachService;
 
@@ -195,7 +197,4 @@ public class CoachController {
             throw new RuntimeException("保存评估结果失败");
         }
     }
-
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = 
-        new com.fasterxml.jackson.databind.ObjectMapper();
 }
