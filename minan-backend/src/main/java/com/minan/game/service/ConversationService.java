@@ -125,21 +125,6 @@ public class ConversationService {
             return String.valueOf(userId).equals(records.get(0).getUserId());
         }
         return String.valueOf(userId).equals(context.getUserId());
-
-            // 7. 返回结果
-            ConversationStartResult result = new ConversationStartResult();
-            result.setConversationId(conversationId);
-            result.setCurrentRound(0);
-            result.setMaxRounds(maxRounds);
-            result.setNpcGreeting(greeting);
-            result.setNpcName(npc.getName());
-            result.setSceneName(scene.getName());
-            return result;
-
-        } catch (Exception e) {
-            log.error("开始对话失败", e);
-            throw new RuntimeException("开始对话失败：" + e.getMessage());
-        }
     }
 
     /**
