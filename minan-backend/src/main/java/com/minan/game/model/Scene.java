@@ -53,6 +53,36 @@ public class Scene {
     @TableField("reference_options")
     private String referenceOptions;
 
+    /**
+     * 最大对话轮次
+     */
+    private Integer maxConversationRounds;
+
+    /**
+     * 目标分数
+     */
+    private Double targetScore;
+
+    /**
+     * 是否启用 AI NPC
+     */
+    private Integer aiNpcEnabled;
+
+    /**
+     * 是否启用 AI 教练
+     */
+    private Integer aiCoachEnabled;
+
+    /**
+     * AI NPC 提示词模板
+     */
+    private String aiNpcPromptTemplate;
+
+    /**
+     * AI 教练提示词模板
+     */
+    private String aiCoachPromptTemplate;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

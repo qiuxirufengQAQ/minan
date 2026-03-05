@@ -145,17 +145,17 @@ public class AiNpcService {
             .model(aiConfigService.getNpcModel())
             .messages(messages)
             .maxTokens(aiConfigService.getNpcMaxTokens())
-            .temperature(aiConfigService.getNpcTemperature())
+            .temperature(Float.parseFloat(String.valueOf(aiConfigService.getNpcTemperature())))
             .resultFormat(GenerationParam.ResultFormat.MESSAGE)
             .build();
 
         // 调用 API
         GenerationResult result = generation.call(param);
 
-        if (result.getStatusCode() == 200 && result.getOutput() != null) {
+        if (result != null && result.getOutput() != null && result.getOutput().getChoices() != null) {
             return result.getOutput().getChoices().get(0).getMessage().getContent();
         } else {
-            throw new Exception("AI API 调用失败：" + result.getMessage());
+            throw new Exception("AI API 调用失败");
         }
     }
 
