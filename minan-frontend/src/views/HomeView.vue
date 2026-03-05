@@ -3,7 +3,7 @@
     <a-layout>
       <a-layout-header class="header">
         <div class="header-content">
-          <h1 class="logo">谜男迷宫</h1>
+          <h1 class="logo">社交迷宫</h1>
           <div class="nav-actions">
             <a-tooltip title="个人中心">
               <div class="nav-icon-btn" @click="goToUserCenter">

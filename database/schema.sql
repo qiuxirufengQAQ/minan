@@ -1,4 +1,4 @@
--- 谜男迷宫游戏数据库表结构
+-- 社交迷宫游戏数据库表结构
 -- 生成时间: 2026-03-03
 -- 版本: 1.1
 -- 说明: 包含所有表结构和索引定义，不包含数据
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `knowledge_category` (
   `parent_id` varchar(64) DEFAULT NULL COMMENT '父分类ID',
   `level` int(11) DEFAULT '1' COMMENT '分类层级: 1=阶段(A/C/S), 2=子阶段(A1/A2/A3), 3=技能类型',
   `description` text COMMENT '分类描述',
-  `theory_basis` varchar(200) DEFAULT NULL COMMENT '理论依据（关联《谜男方法》章节）',
+  `theory_basis` varchar(200) DEFAULT NULL COMMENT '理论依据（关联社交心理学理论）',
   `learning_goal` text COMMENT '学习目标',
   `order` int(11) DEFAULT '0' COMMENT '排序',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS `level` (
   `order` int(11) NOT NULL DEFAULT '0' COMMENT '关卡顺序',
   `description` text COMMENT '关卡描述',
   `theme` varchar(100) DEFAULT NULL COMMENT '关卡主题',
-  `theory` varchar(100) DEFAULT NULL COMMENT '谜男理论对应',
+  `theory` varchar(100) DEFAULT NULL COMMENT '社交理论对应',
   `cp_range_min` int(11) DEFAULT '0' COMMENT '最低CP奖励',
   `cp_range_max` int(11) DEFAULT '0' COMMENT '最高CP奖励',
   `icon_url` varchar(500) DEFAULT NULL COMMENT '关卡图标URL',

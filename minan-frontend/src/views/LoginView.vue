@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h1 class="title">谜男迷宫：魅力勇者的七日试炼</h1>
+      <h1 class="title">社交迷宫：魅力勇者的七日试炼</h1>
       <a-form @submit="handleSubmit" layout="vertical">
         <a-form-item label="用户名">
           <a-input v-model:value="username" placeholder="请输入用户名" />
