@@ -113,6 +113,7 @@ public class ConversationService {
             greetingRecord.setRoundNumber(0);
             greetingRecord.setUserInput(""); // 空字符串不需要加密
             greetingRecord.setNpcResponse(aesEncryptor.encrypt(greeting)); // 加密 NPC 回复
+            greetingRecord.setIsEncrypted(1); // 标记为已加密
             greetingRecord.setCreatedAt(LocalDateTime.now());
             conversationRecordMapper.insert(greetingRecord);
 
@@ -199,6 +200,7 @@ public class ConversationService {
             record.setRoundNumber(currentRound);
             record.setUserInput(aesEncryptor.encrypt(userInput)); // 加密用户输入
             record.setNpcResponse(aesEncryptor.encrypt(npcResponse)); // 加密 AI 回复
+            record.setIsEncrypted(1); // 标记为已加密
             record.setAiModel(aiConfigService.getNpcModel());
             record.setCreatedAt(LocalDateTime.now());
             conversationRecordMapper.insert(record);
