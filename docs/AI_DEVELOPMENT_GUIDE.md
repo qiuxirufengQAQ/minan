@@ -566,3 +566,285 @@ TOKEN=$(curl -s -X POST [登录接口] -d '[登录数据]' | grep -o '"token":"[
 - **小步快跑，详细记录**
 - **从源代码获取真相，不要猜测**
 - **系统性思考，不要零散工作**
+
+---
+
+## 🗄️ 数据库和配置修改完整记录 ⭐ 重要
+
+**目的**: 记录所有数据库结构修改和配置文件变更，避免另一个 AI 重复踩坑
+
+### 数据库修改记录
+
+#### 2026-03-07: evaluation 表添加字段
+
+**问题**: `GET /api/statistics/get` 返回 500 错误
+
+**错误日志**:
+```
+java.sql.SQLSyntaxErrorException: Unknown column 'conversation_id' in 'field list'
+java.sql.SQLSyntaxErrorException: Unknown column 'conversation_rounds' in 'field list'
+```
+
+**根本原因**: 
+- Model 类 `Evaluation.java` 定义了这些字段：
+  ```java
+  private String conversationId;
+  private Integer conversationRounds;
+  ```
+- 但数据库表 `evaluation` 中没有这些字段
+- MyBatis-Plus 自动生成 SQL 时包含了这些字段，导致查询失败
+
+**修复 SQL**:
+```sql
+-- 在 minan_game1 和 minan_game2 数据库中都要执行
+USE minan_game1;
+ALTER TABLE evaluation ADD COLUMN conversation_id VARCHAR(100) DEFAULT NULL COMMENT '对话 ID' AFTER attempt_number;
+ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对话轮数' AFTER conversation_id;
+
+-- 如果你的 AI 环境是 minan_game2，也要执行：
+USE minan_game2;
+ALTER TABLE evaluation ADD COLUMN conversation_id VARCHAR(100) DEFAULT NULL COMMENT '对话 ID' AFTER attempt_number;
+ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对话轮数' AFTER conversation_id;
+```
+
+**验证方法**:
+```bash
+# 检查字段是否添加成功
+mysql -u root -proot minan_game1 -e "DESC evaluation;" | grep conversation
+
+# 应该看到：
+# conversation_id      | varchar(100) | YES  | NULL | NULL    |
+# conversation_rounds  | int          | YES  |      | 0      |
+```
+
+**重要教训**:
+- ⭐ **每次添加 Model 字段后，必须同步修改数据库**
+- ⭐ **使用 MyBatis-Plus 时，Model 的所有非@Transient 字段都会出现在 SQL 中**
+- ⭐ **多 AI 环境下，每个数据库都要执行相同的修改**
+
+**检查清单**（添加新字段时）:
+- [ ] 修改 Model 类
+- [ ] 生成 SQL 脚本
+- [ ] 在 minan_game1 执行
+- [ ] 在 minan_game2 执行
+- [ ] 验证字段已添加
+- [ ] 测试接口是否正常
+
+---
+
+### 配置文件修改记录
+
+#### 2026-03-07: application.yml 添加 Sa-Token 配置
+
+**问题**: 登录后 Token 无法被正确识别，导致"未能读取到有效 token"错误
+
+**修改文件**: `minan-backend/src/main/resources/application.yml`
+
+**添加的配置**:
+```yaml
+# Sa-Token 配置
+sa-token:
+  # token 名称（同时也是 cookie 名称）
+  token-name: satoken
+  # token 有效期，单位 s，默认 30 天，-1 代表永不过期
+  timeout: 2592000
+  # token 临时有效期（指定时间内无操作就视为 token 过期）
+  activity-timeout: -1
+  # 是否允许同一账号并发登录
+  is-concurrent: true
+  # 是否共用一个 token
+  is-share: false
+  # token 风格
+  token-style: uuid
+  # 是否输出操作日志
+  is-log: false
+  # 是否从 cookie 中读取 token
+  is-read-cookie: false
+  # 是否从 header 中读取 token
+  is-read-header: true
+  # token 前缀（支持多个，逗号分隔）
+  token-prefix: Bearer,satoken
+```
+
+**配置说明**:
+- `token-name: satoken` - header 中使用 `satoken: xxx` 传递 token
+- `is-read-header: true` - 允许从 header 读取 token
+- `token-prefix: Bearer,satoken` - 支持两种格式：
+  - `Authorization: Bearer xxx`
+  - `satoken: xxx`
+- `is-read-cookie: false` - 生产环境建议关闭 cookie 读取（更安全）
+
+**重要教训**:
+- ⭐ **Sa-Token 默认配置可能不满足需求，需要显式配置**
+- ⭐ **多 AI 环境下，确保所有环境的配置一致**
+- ⭐ **修改配置后要重启服务才能生效**
+
+**验证方法**:
+```bash
+# 1. 登录获取 token
+TOKEN=$(curl -s -X POST "http://localhost:8081/api/users/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"copaw","password":"copaw"}' \
+  | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+# 2. 测试带 token 的请求
+curl -s "http://localhost:8081/api/users/getDetail?userId=USER_COPAW_001" \
+  -H "satoken=$TOKEN"
+
+# 应该返回：{"code":200,"message":"success","data":{...}}
+# 如果返回"未能读取到有效 token"，说明配置有问题
+```
+
+---
+
+#### 2026-03-07: Controller 路径修改
+
+**问题**: Controller 的 `@RequestMapping` 路径与 `application.yml` 的 `context-path` 重复
+
+**修改文件**:
+- `CoachController.java`
+- `ConversationController.java`
+- `PermissionController.java`
+
+**修改前**:
+```java
+@RestController
+@RequestMapping("/api/coach")  // ❌ 错误：会与 context-path 重复
+public class CoachController { }
+```
+
+**修改后**:
+```java
+@RestController
+@RequestMapping("/coach")  // ✅ 正确：最终路径是 /api/coach
+public class CoachController { }
+```
+
+**原因分析**:
+- `application.yml` 配置了：`server.servlet.context-path: /api`
+- 这会给所有接口自动添加 `/api` 前缀
+- 如果 Controller 再加 `/api`，就会变成 `/api/api/coach`（重复）
+
+**重要教训**:
+- ⭐ **有 context-path 配置时，Controller 不要加 /api 前缀**
+- ⭐ **检查路径是否正确：最终 URL = context-path + @RequestMapping 路径**
+
+**验证方法**:
+```bash
+# 检查 Controller 路径
+grep -r "@RequestMapping" src/main/java/com/minan/game/controller/ | grep "/api/"
+
+# 如果有输出，说明有需要修改的 Controller
+# 正确的做法是移除 /api 前缀
+```
+
+---
+
+### 完整修改清单（供另一个 AI 参考）
+
+如果你要在新环境（如 minan_game2）部署，需要执行以下操作：
+
+#### 1. 数据库修改
+```sql
+-- 切换到你的数据库
+USE minan_game2;
+
+-- 添加 evaluation 表缺失字段
+ALTER TABLE evaluation ADD COLUMN conversation_id VARCHAR(100) DEFAULT NULL COMMENT '对话 ID' AFTER attempt_number;
+ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对话轮数' AFTER conversation_id;
+
+-- 验证
+DESC evaluation;
+```
+
+#### 2. 配置文件检查
+确保 `application.yml` 包含：
+```yaml
+server:
+  servlet:
+    context-path: /api
+
+# Sa-Token 配置（必须添加）
+sa-token:
+  token-name: satoken
+  timeout: 2592000
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+  is-read-cookie: false
+  is-read-header: true
+  token-prefix: Bearer,satoken
+```
+
+#### 3. Controller 路径检查
+确保以下 Controller 的 `@RequestMapping` **不包含** `/api` 前缀：
+- `CoachController.java` → `@RequestMapping("/coach")`
+- `ConversationController.java` → `@RequestMapping("/conversation")`
+- `PermissionController.java` → `@RequestMapping("/permission")`
+
+#### 4. 验证步骤
+```bash
+# 1. 编译代码
+cd /root/.copaw/data/minan/minan-backend
+mvn clean package -DskipTests -q
+
+# 2. 部署
+cp target/game-1.0.0.jar /var/www/minan2/
+systemctl restart minan-game2
+
+# 3. 等待启动
+sleep 5
+
+# 4. 测试登录
+curl -X POST "http://localhost:8082/api/users/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"copaw","password":"copaw"}'
+
+# 5. 测试带 token 的接口
+TOKEN="从上一步获取"
+curl "http://localhost:8082/api/users/getDetail?userId=USER_COPAW_001" \
+  -H "satoken=$TOKEN"
+
+# 6. 测试统计接口（验证数据库字段）
+curl "http://localhost:8082/api/statistics/get" \
+  -H "satoken=$TOKEN"
+```
+
+---
+
+### 避坑指南 ⭐⭐⭐
+
+**坑 1**: 添加 Model 字段后忘记修改数据库
+- **症状**: 500 错误，日志显示 "Unknown column 'xxx' in 'field list'"
+- **解决**: 立即检查数据库表结构，添加缺失字段
+- **预防**: 建立检查清单，每次修改 Model 后必须同步数据库
+
+**坑 2**: Controller 路径重复
+- **症状**: 404 错误，路径变成 `/api/api/xxx`
+- **解决**: 移除 Controller 的 `/api` 前缀
+- **预防**: 记住 `context-path` 会自动添加前缀
+
+**坑 3**: Sa-Token 配置缺失
+- **症状**: "未能读取到有效 token" 错误
+- **解决**: 添加完整的 Sa-Token 配置
+- **预防**: 新项目开始时先配置好 Sa-Token
+
+**坑 4**: 多环境配置不一致
+- **症状**: 一个环境正常，另一个环境报错
+- **解决**: 确保所有数据库和配置都同步修改
+- **预防**: 建立环境同步检查清单
+
+**坑 5**: 配置修改后未重启
+- **症状**: 修改了配置但不生效
+- **解决**: `systemctl restart minan-gameX`
+- **预防**: 修改配置后养成重启习惯
+
+---
+
+**最后提醒**: 
+- 💾 **所有数据库修改都要在 minan_game1 和 minan_game2 同时执行**
+- 📝 **每次修改都要记录在案，方便追踪**
+- ✅ **修改后要完整测试相关接口**
+- 🔄 **定期同步两个环境的配置和数据**
+
