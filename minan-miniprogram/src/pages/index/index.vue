@@ -43,10 +43,18 @@ export default {
   name: 'Home',
   methods: {
     startScene() {
-      alert('场景功能开发中！')
+      // 跳转到场景页
+      this.$router.push({
+        path: '/scene',
+        query: {
+          sceneId: 'date_park',
+          sceneName: '公园约会'
+        }
+      })
     },
     goToLogin() {
-      alert('登录功能开发中！')
+      // 跳转到登录页
+      this.$router.push('/login')
     }
   }
 }
