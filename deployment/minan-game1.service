@@ -30,10 +30,11 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=minan-game1
 
-# 环境变量
-Environment="JAVA_OPTS=-Xms512m -Xmx2g"
-Environment="SPRING_PROFILES_ACTIVE=dev1"
+# 环境变量 - 关键！确保隔离
+Environment="SERVER_PORT=8081"
 Environment="DB_NAME=minan_game1"
+Environment="SPRING_PROFILES_ACTIVE=ai1"
+Environment="JAVA_OPTS=-Xms512m -Xmx2g"
 
 # PID 文件
 PIDFile=/var/www/minan1/app.pid
