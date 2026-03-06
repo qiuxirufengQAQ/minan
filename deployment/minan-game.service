@@ -1,0 +1,44 @@
+[Unit]
+Description=Minan Game Backend Service
+Documentation=https://github.com/qiuxirufengQAQ/minan
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/minan
+
+# 启动命令
+ExecStart=/usr/bin/java -jar game-1.0.0.jar --server.port=8080
+
+# 重启策略
+Restart=on-failure
+RestartSec=10
+
+# 资源限制
+LimitNOFILE=65535
+LimitNPROC=4096
+
+# 超时设置
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=minan-game
+
+# 环境变量
+Environment="JAVA_OPTS=-Xms512m -Xmx2g"
+Environment="SPRING_PROFILES_ACTIVE=prod"
+
+# PID 文件
+PIDFile=/var/www/minan/app.pid
+
+# 启动前检查
+ExecStartPre=/bin/bash -c 'if [ -f /var/www/minan/game-1.0.0.jar ]; then exit 0; else exit 1; fi'
+
+[Install]
+WantedBy=multi-user.target
