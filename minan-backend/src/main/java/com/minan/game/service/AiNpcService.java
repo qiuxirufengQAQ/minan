@@ -169,7 +169,7 @@ public class AiNpcService {
                     }
                     return content;
                 } else {
-                    throw new Exception("AI API 调用失败：" + (result != null ? result.getMessage() : "无响应"));
+                    throw new Exception("AI API 调用失败：" + (result != null ? result.getRequestId() : "无响应"));
                 }
 
             } catch (Exception e) {

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -179,7 +180,7 @@ public class AiCoachService {
                     }
                     return content;
                 } else {
-                    throw new Exception("AI API 调用失败：" + (result != null ? result.getMessage() : "无响应"));
+                    throw new Exception("AI API 调用失败：" + (result != null ? result.getRequestId() : "无响应"));
                 }
 
             } catch (Exception e) {
@@ -228,16 +229,19 @@ public class AiCoachService {
                 
                 if (dimNode != null && dimNode.isObject()) {
                     // 动态遍历所有维度字段
-                    dimNode.fieldNames().forEachRemaining(fieldName -> {
+                    Iterator<Map.Entry<String, JsonNode>> fields = dimNode.fields();
+                    while (fields.hasNext()) {
+                        Map.Entry<String, JsonNode> entry = fields.next();
                         try {
-                            JsonNode valueNode = dimNode.get(fieldName);
+                            String fieldName = entry.getKey();
+                            JsonNode valueNode = entry.getValue();
                             if (valueNode != null && valueNode.isNumber()) {
                                 scores.put(fieldName, valueNode.asInt());
                             }
                         } catch (Exception e) {
-                            log.warn("解析维度 {} 失败：{}", fieldName, e.getMessage());
+                            log.warn("解析维度 {} 失败：{}", entry.getKey(), e.getMessage());
                         }
-                    });
+                    }
                     
                     // 如果动态解析没有结果，使用默认维度（向后兼容）
                     if (scores.isEmpty()) {
