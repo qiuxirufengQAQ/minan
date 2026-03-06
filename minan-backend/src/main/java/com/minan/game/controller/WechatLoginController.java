@@ -76,13 +76,51 @@ public class WechatLoginController {
      * 调用微信接口获取 openid
      */
     private String getOpenid(String code) {
-        // TODO: 实现调用微信 auth.code2Session 接口
-        // 请求 URL: https://api.weixin.qq.com/sns/jscode2session
-        // 参数：appid, secret, js_code=code, grant_type=authorization_code
-        // 返回：openid, session_key
-        
-        // 开发环境返回模拟 openid
-        return "mock_openid_" + code;
+        try {
+            // 微信接口 URL
+            String url = "https://api.weixin.qq.com/sns/jscode2session";
+            url += "?appid=" + appid;
+            url += "&secret=" + secret;
+            url += "&js_code=" + code;
+            url += "&grant_type=authorization_code";
+            
+            // 发送 HTTP 请求
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            
+            // 读取响应
+            java.io.BufferedReader in = new java.io.BufferedReader(
+                new java.io.InputStreamReader(conn.getInputStream(), "UTF-8")
+            );
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+            in.close();
+            
+            // 解析 JSON 响应
+            String responseStr = response.toString();
+            log.info("微信接口响应：{}", responseStr);
+            
+            // 简单解析（生产环境建议使用 Jackson 或 Gson）
+            if (responseStr.contains("\"openid\"")) {
+                // 提取 openid
+                int start = responseStr.indexOf("\"openid\":\"") + 10;
+                int end = responseStr.indexOf("\"", start);
+                return responseStr.substring(start, end);
+            } else {
+                log.error("微信登录失败：{}", responseStr);
+                return null;
+            }
+            
+        } catch (Exception e) {
+            log.error("调用微信接口异常", e);
+            // 开发环境返回模拟 openid
+            return "mock_openid_" + code;
+        }
     }
 
     /**

@@ -20,6 +20,10 @@ public class User {
 
     private String password;
 
+    private String wechatOpenid;
+
+    private String nickname;
+
     private String avatar;
 
     private Integer totalCp;

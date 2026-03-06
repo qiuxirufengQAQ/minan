@@ -53,4 +53,41 @@ public class UserService {
         queryWrapper.eq(User::getUserId, userId);
         return userMapper.selectOne(queryWrapper);
     }
+
+    /**
+     * 根据 openid 查找用户
+     */
+    public User findByOpenid(String openid) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(User::getWechatOpenid, openid);
+        return userMapper.selectOne(queryWrapper);
+    }
+
+    /**
+     * 通过微信创建用户
+     */
+    @Transactional
+    public User createByWechat(String openid) {
+        // 先检查是否已存在
+        User existingUser = findByOpenid(openid);
+        if (existingUser != null) {
+            return existingUser;
+        }
+
+        User user = new User();
+        user.setUserId(IdGenerator.generateUserId());
+        user.setWechatOpenid(openid);
+        user.setNickname("探索者_" + (System.currentTimeMillis() % 10000));
+        user.setAvatar("");
+        user.setTotalCp(0);
+        user.setLevel(1);
+        user.setTotalScore(0);
+        user.setCompletedScenes(0);
+        LocalDateTime now = LocalDateTime.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+
+        userMapper.insert(user);
+        return user;
+    }
 }
