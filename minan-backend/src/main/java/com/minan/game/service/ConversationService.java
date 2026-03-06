@@ -108,7 +108,7 @@ public class ConversationService {
             greetingRecord.setRecordId(IdUtil.fastSimpleUUID());
             greetingRecord.setConversationId(conversationId);
             greetingRecord.setSceneId(sceneId);
-            greetingRecord.setUserId(userId);
+            greetingRecord.setUserId(String.valueOf(userId));
             greetingRecord.setNpcId(npcId);
             greetingRecord.setRoundNumber(0);
             greetingRecord.setUserInput(""); // 空字符串不需要加密
@@ -118,6 +118,17 @@ public class ConversationService {
 
             log.info("对话开始：conversationId={}, userId={}, sceneId={}, npcId={}", 
                 conversationId, userId, sceneId, npcId);
+
+            // 7. 返回结果
+            ConversationStartResult result = new ConversationStartResult();
+            result.setConversationId(conversationId);
+            result.setCurrentRound(0);
+            result.setMaxRounds(maxRounds);
+            result.setNpcGreeting(greeting);
+            result.setNpcName(npc.getName());
+            result.setSceneName(scene.getName());
+            return result;
+
         } catch (IllegalArgumentException e) {
             throw e; // 保留参数错误
         } catch (Exception e) {
@@ -140,21 +151,6 @@ public class ConversationService {
             return String.valueOf(userId).equals(records.get(0).getUserId());
         }
         return String.valueOf(userId).equals(context.getUserId());
-
-            // 7. 返回结果
-            ConversationStartResult result = new ConversationStartResult();
-            result.setConversationId(conversationId);
-            result.setCurrentRound(0);
-            result.setMaxRounds(maxRounds);
-            result.setNpcGreeting(greeting);
-            result.setNpcName(npc.getName());
-            result.setSceneName(scene.getName());
-            return result;
-
-        } catch (Exception e) {
-            log.error("开始对话失败", e);
-            throw new RuntimeException("开始对话失败：" + e.getMessage());
-        }
     }
 
     /**
