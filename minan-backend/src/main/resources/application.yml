@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8082
   servlet:
     context-path: /api
 
@@ -8,9 +8,9 @@ spring:
     name: minan-game
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:minan_game}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: ${DB_USER:root}
-    password: ${DB_PASS:root}
+    url: jdbc:mysql://localhost:3306/minan_game2?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: ""
   jackson:
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
