@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/coach")
+@RequestMapping("/coach")
 @Api(tags = "AI 教练评估接口")
 public class CoachController {
 

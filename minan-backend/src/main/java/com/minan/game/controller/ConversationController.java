@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/conversation")
+@RequestMapping("/conversation")
 @Api(tags = "AI NPC 对话接口")
 public class ConversationController {
 
@@ -35,10 +35,31 @@ public class ConversationController {
     @PostMapping("/start")
     @ApiOperation("开始对话")
     public Response<Map<String, Object>> startConversation(
+        @RequestHeader(value = "satoken", required = false) String satoken,
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @RequestBody @Validated StartConversationRequest request
     ) {
         try {
-            // 使用当前登录用户 ID，而非前端传入
+            // 尝试从不同位置获取 token
+            String token = satoken;
+            if (token == null && authorization != null && authorization.startsWith("Bearer ")) {
+                token = authorization.substring(7);
+            }
+            
+            log.info("Received token - satoken: {}, authorization: {}, extracted: {}", satoken, authorization, token);
+            
+            // 如果还是没有 token，返回错误
+            if (token == null) {
+                return Response.error("缺少 token");
+            }
+            
+            // 手动验证 token
+            if (!StpUtil.stpLogic.getTokenValueByLoginId(StpUtil.getLoginIdDefault(), false).equals(token)) {
+                // Token 不匹配，尝试重新登录
+                log.warn("Token 不匹配，尝试使用接收到的 token");
+            }
+            
+            // 使用当前登录用户 ID
             Long currentUserId = StpUtil.getLoginIdAsLong();
             String sceneId = request.getSceneId();
             

@@ -17,7 +17,7 @@ import java.util.List;
  * 权限管理控制器
  */
 @RestController
-@RequestMapping("/api/permission")
+@RequestMapping("/permission")
 public class PermissionController {
     
     @Autowired

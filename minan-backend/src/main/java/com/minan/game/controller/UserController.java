@@ -5,8 +5,12 @@ import com.minan.game.dto.UserLoginRequest;
 import com.minan.game.dto.UserRegisterRequest;
 import com.minan.game.model.User;
 import com.minan.game.service.UserService;
+import cn.dev33.satoken.stp.StpUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -16,12 +20,22 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/login")
-    public Response<User> login(@RequestBody UserLoginRequest request) {
+    public Response<Map<String, Object>> login(@RequestBody UserLoginRequest request) {
         User user = userService.login(request);
         if (user == null) {
             return Response.error("用户名或密码错误");
         }
-        return Response.success(user);
+        
+        // 登录并生成 token
+        StpUtil.login(user.getId());
+        String token = StpUtil.getTokenValue();
+        
+        // 返回用户信息和 token
+        Map<String, Object> data = new HashMap<>();
+        data.put("user", user);
+        data.put("token", token);
+        
+        return Response.success(data);
     }
 
     @PostMapping("/register")

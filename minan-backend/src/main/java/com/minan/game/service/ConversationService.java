@@ -1,6 +1,7 @@
 package com.minan.game.service;
 
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.minan.game.mapper.ConversationRecordMapper;
 import com.minan.game.mapper.NpcCharacterMapper;
 import com.minan.game.mapper.SceneMapper;
@@ -53,10 +54,13 @@ public class ConversationService {
     @Transactional
     public ConversationStartResult startConversation(Long userId, String sceneId) {
         try {
-            // 1. 加载场景信息
-            Scene scene = sceneMapper.selectById(sceneId);
+            // 1. 加载场景信息 - 使用 scene_id 字段查询
+            LambdaQueryWrapper<Scene> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Scene::getSceneId, sceneId);
+            Scene scene = sceneMapper.selectOne(queryWrapper);
+            
             if (scene == null) {
-                throw new IllegalArgumentException("场景不存在");
+                throw new IllegalArgumentException("场景不存在：" + sceneId);
             }
             
             // 从 resourceIds 解析第一个 NPC ID（格式：NPC_001,NPC_002,...）
