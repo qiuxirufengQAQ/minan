@@ -22,7 +22,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/conversation")
+@RequestMapping("/conversation")
 @Api(tags = "AI NPC 对话接口")
 public class ConversationController {
 
