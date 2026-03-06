@@ -1,7 +1,7 @@
 package com.minan.game.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.minan.game.dto.Result;
+import com.minan.game.dto.Response;
 import com.minan.game.model.User;
 import com.minan.game.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,20 +30,23 @@ public class WechatLoginController {
     @Value("${wechat.secret:}")
     private String secret;
 
+    @Value("${app.env:development}")
+    private String appEnv;
+
     /**
      * 微信一键登录
      * @param loginRequest 登录请求（包含 code）
      * @return 登录结果（包含 token 和用户信息）
      */
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody WechatLoginRequest loginRequest) {
+    public Response<Map<String, Object>> login(@RequestBody WechatLoginRequest loginRequest) {
         try {
             String code = loginRequest.getCode();
             
             // 1. 调用微信接口换取 openid
             String openid = getOpenid(code);
             if (openid == null) {
-                return Result.error("微信登录失败");
+                return Response.error("微信登录失败");
             }
             
             log.info("微信登录成功，openid: {}", openid);
@@ -64,11 +67,11 @@ public class WechatLoginController {
             data.put("token", token);
             data.put("userInfo", buildUserInfoVO(user));
             
-            return Result.success(data);
+            return Response.success(data);
             
         } catch (Exception e) {
             log.error("微信登录异常", e);
-            return Result.error("登录失败：" + e.getMessage());
+            return Response.error("登录失败：" + e.getMessage());
         }
     }
 
@@ -76,6 +79,12 @@ public class WechatLoginController {
      * 调用微信接口获取 openid
      */
     private String getOpenid(String code) {
+        // 开发环境直接返回模拟 openid
+        if ("development".equals(appEnv) || appid == null || appid.isEmpty()) {
+            log.info("开发环境，使用模拟 openid");
+            return "mock_openid_" + code;
+        }
+        
         try {
             // 微信接口 URL
             String url = "https://api.weixin.qq.com/sns/jscode2session";

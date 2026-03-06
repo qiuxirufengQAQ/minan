@@ -59,8 +59,8 @@ public class ConversationService {
                 throw new IllegalArgumentException("场景不存在");
             }
             
-            // 使用场景默认 NPC
-            String npcId = scene.getDefaultNpcId();
+            // 使用场景默认 NPC（临时使用第一个 NPC）
+            String npcId = "npc_001"; // TODO: 从场景配置获取
             if (npcId == null) {
                 throw new IllegalArgumentException("场景未配置默认 NPC");
             }
@@ -97,7 +97,7 @@ public class ConversationService {
             greetingRecord.setRecordId(IdUtil.fastSimpleUUID());
             greetingRecord.setConversationId(conversationId);
             greetingRecord.setSceneId(sceneId);
-            greetingRecord.setUserId(userId);
+            greetingRecord.setUserId(String.valueOf(userId));
             greetingRecord.setNpcId(npcId);
             greetingRecord.setRoundNumber(0);
             greetingRecord.setUserInput(""); // 空字符串不需要加密
@@ -107,6 +107,17 @@ public class ConversationService {
 
             log.info("对话开始：conversationId={}, userId={}, sceneId={}, npcId={}", 
                 conversationId, userId, sceneId, npcId);
+            
+            // 返回结果
+            ConversationStartResult result = new ConversationStartResult();
+            result.setConversationId(conversationId);
+            result.setCurrentRound(0);
+            result.setMaxRounds(maxRounds);
+            result.setNpcGreeting(greeting);
+            result.setNpcName(npc.getName());
+            result.setSceneName(scene.getName());
+            return result;
+            
         } catch (IllegalArgumentException e) {
             throw e; // 保留参数错误
         } catch (Exception e) {

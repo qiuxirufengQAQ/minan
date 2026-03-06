@@ -30,6 +30,10 @@ public class User {
 
     private Integer level;
 
+    private Integer totalScore;
+
+    private Integer completedScenes;
+
     private String currentLevelId;
 
     private String unlockedLevels;
