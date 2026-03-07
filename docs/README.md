@@ -99,7 +99,7 @@
 
 ## 🔗 相关链接
 
-- **项目仓库：** https://github.com/qiuxirufengQAQ/minan
+- **项目仓库：** https://github.com/qiuxirufengQAQ/lianai
 - **API 文档：** http://localhost:8081/swagger-ui.html
 - **通义千问：** https://dashscope.console.aliyun.com/apiKey
 - **微信小程序：** https://mp.weixin.qq.com

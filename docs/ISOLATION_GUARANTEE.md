@@ -22,14 +22,14 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/${DB_NAME:minan_game1}
+    url: jdbc:mysql://localhost:3306/${DB_NAME:lianai_game1}
 ```
 
 ```ini
 # systemd 服务 - 设置环境变量
 [Service]
 Environment="SERVER_PORT=8081"
-Environment="DB_NAME=minan_game1"
+Environment="DB_NAME=lianai_game1"
 ```
 
 ---
@@ -39,11 +39,11 @@ Environment="DB_NAME=minan_game1"
 | 配置项 | 小爪 (AI-1) | 另一个 AI (AI-2) | 隔离方式 |
 |--------|-----------|----------------|---------|
 | **端口** | `SERVER_PORT=8081` | `SERVER_PORT=8082` | systemd 环境变量 |
-| **数据库** | `DB_NAME=minan_game1` | `DB_NAME=minan_game2` | systemd 环境变量 |
-| **部署目录** | `/var/www/minan1/` | `/var/www/minan2/` | 固定路径 |
-| **Systemd 服务** | `minan-game1.service` | `minan-game2.service` | 独立服务名 |
+| **数据库** | `DB_NAME=lianai_game1` | `DB_NAME=lianai_game2` | systemd 环境变量 |
+| **部署目录** | `/var/www/lianai1/` | `/var/www/lianai2/` | 固定路径 |
+| **Systemd 服务** | `lianai-game1.service` | `lianai-game2.service` | 独立服务名 |
 | **Nginx 端口** | `listen 3001` | `listen 3002` | 独立配置文件 |
-| **日志** | `journalctl -u minan-game1` | `journalctl -u minan-game2` | 独立日志流 |
+| **日志** | `journalctl -u lianai-game1` | `journalctl -u lianai-game2` | 独立日志流 |
 
 ---
 
@@ -80,20 +80,20 @@ server:
 
 ```yaml
 # 小爪想改成：
-url: jdbc:mysql://localhost:3306/minan_game1
+url: jdbc:mysql://localhost:3306/lianai_game1
 
 # 另一个 AI 想改成：
-url: jdbc:mysql://localhost:3306/minan_game2
+url: jdbc:mysql://localhost:3306/lianai_game2
 ```
 
 **解决**:
-- ✅ 代码中使用 `${DB_NAME:minan_game1}` 占位符
+- ✅ 代码中使用 `${DB_NAME:lianai_game1}` 占位符
 - ✅ 实际值由 systemd 的 `Environment` 决定
 - ✅ 部署脚本保证环境变量正确
 
 **结果**: 
-- 小爪的服务连接 `minan_game1`
-- 另一个 AI 的服务连接 `minan_game2`
+- 小爪的服务连接 `lianai_game1`
+- 另一个 AI 的服务连接 `lianai_game2`
 
 ---
 
@@ -110,8 +110,8 @@ url: jdbc:mysql://localhost:3306/minan_game2
 ```
 
 **解决**:
-- ✅ 部署到不同目录 (`/var/www/minan1/` vs `/var/www/minan2/`)
-- ✅ 启动不同服务 (`minan-game1` vs `minan-game2`)
+- ✅ 部署到不同目录 (`/var/www/lianai1/` vs `/var/www/lianai2/`)
+- ✅ 启动不同服务 (`lianai-game1` vs `lianai-game2`)
 - ✅ 使用不同端口 (8081 vs 8082)
 
 **结果**: 完全隔离，互不影响
@@ -124,11 +124,11 @@ url: jdbc:mysql://localhost:3306/minan_game2
 
 ```bash
 # 查看小爪的服务
-sudo systemctl status minan-game1 | grep "Main PID"
+sudo systemctl status lianai-game1 | grep "Main PID"
 # 应该显示端口 8081
 
 # 查看另一个 AI 的服务
-sudo systemctl status minan-game2 | grep "Main PID"
+sudo systemctl status lianai-game2 | grep "Main PID"
 # 应该显示端口 8082
 
 # 验证端口占用
@@ -140,28 +140,28 @@ netstat -tlnp | grep -E "8081|8082"
 
 ```bash
 # 小爪的数据库
-mysql -u root -proot minan_game1 -e "SELECT DATABASE();"
-# 输出：minan_game1
+mysql -u root -proot lianai_game1 -e "SELECT DATABASE();"
+# 输出：lianai_game1
 
 # 另一个 AI 的数据库
-mysql -u root -proot minan_game2 -e "SELECT DATABASE();"
-# 输出：minan_game2
+mysql -u root -proot lianai_game2 -e "SELECT DATABASE();"
+# 输出：lianai_game2
 ```
 
 ### 检查环境变量
 
 ```bash
 # 查看小爪服务的环境变量
-sudo systemctl show minan-game1 | grep Environment
+sudo systemctl show lianai-game1 | grep Environment
 # 应该显示：
 # Environment=SERVER_PORT=8081
-# Environment=DB_NAME=minan_game1
+# Environment=DB_NAME=lianai_game1
 
 # 查看另一个 AI 服务的环境变量
-sudo systemctl show minan-game2 | grep Environment
+sudo systemctl show lianai-game2 | grep Environment
 # 应该显示：
 # Environment=SERVER_PORT=8082
-# Environment=DB_NAME=minan_game2
+# Environment=DB_NAME=lianai_game2
 ```
 
 ---
@@ -177,7 +177,7 @@ sudo systemctl show minan-game2 | grep Environment
 # 手动指定数据库名 - 会破坏隔离
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/minan_game1
+    url: jdbc:mysql://localhost:3306/lianai_game1
 ```
 
 **✅ 正确做法**:
@@ -185,7 +185,7 @@ spring:
 # 保持环境变量占位符
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/${DB_NAME:minan_game1}
+    url: jdbc:mysql://localhost:3306/${DB_NAME:lianai_game1}
 ```
 
 **判断标准**:
@@ -199,7 +199,7 @@ spring:
 ### 代码层面
 - [x] `application.yml` 使用环境变量
 - [x] 不硬编码数据库名、端口
-- [x] 默认值指向正确的环境（小爪默认 8081/minan_game1）
+- [x] 默认值指向正确的环境（小爪默认 8081/lianai_game1）
 
 ### 部署层面
 - [x] systemd 服务配置独立

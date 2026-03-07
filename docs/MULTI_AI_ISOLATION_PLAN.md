@@ -8,13 +8,13 @@
 
 | 资源 | 小爪 (develop_copaw) | 另一个 AI (develop_openclaw) | 备注 |
 |------|---------------------|---------------------------|------|
-| **数据库** | `minan_game1` | `minan_game2` | 独立数据库 |
+| **数据库** | `lianai_game1` | `lianai_game2` | 独立数据库 |
 | **后端端口** | `8081` | `8082` | Spring Boot |
 | **前端端口** | `3001` | `3002` | Nginx |
-| **Systemd 服务** | `minan-game1` | `minan-game2` | 独立服务 |
-| **部署目录** | `/var/www/minan1/` | `/var/www/minan2/` | 独立目录 |
+| **Systemd 服务** | `lianai-game1` | `lianai-game2` | 独立服务 |
+| **部署目录** | `/var/www/lianai1/` | `/var/www/lianai2/` | 独立目录 |
 | **日志目录** | `/var/log/minan1/` | `/var/log/minan2/` | 独立日志 |
-| **PID 文件** | `/var/www/minan1/app.pid` | `/var/www/minan2/app.pid` | 独立 PID |
+| **PID 文件** | `/var/www/lianai1/app.pid` | `/var/www/lianai2/app.pid` | 独立 PID |
 | **配置文件** | `application-dev1.yml` | `application-dev2.yml` | 独立配置 |
 
 ---
@@ -26,19 +26,19 @@
 ```bash
 # 小爪的数据库
 mysql -u root -proot <<EOF
-CREATE DATABASE IF NOT EXISTS minan_game1 
+CREATE DATABASE IF NOT EXISTS lianai_game1 
   DEFAULT CHARACTER SET utf8mb4 
   DEFAULT COLLATE utf8mb4_unicode_ci;
-GRANT ALL PRIVILEGES ON minan_game1.* TO 'root'@'localhost';
+GRANT ALL PRIVILEGES ON lianai_game1.* TO 'root'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 
 # 另一个 AI 的数据库
 mysql -u root -proot <<EOF
-CREATE DATABASE IF NOT EXISTS minan_game2 
+CREATE DATABASE IF NOT EXISTS lianai_game2 
   DEFAULT CHARACTER SET utf8mb4 
   DEFAULT COLLATE utf8mb4_unicode_ci;
-GRANT ALL PRIVILEGES ON minan_game2.* TO 'root'@'localhost';
+GRANT ALL PRIVILEGES ON lianai_game2.* TO 'root'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 ```
@@ -47,17 +47,17 @@ EOF
 
 ```bash
 # 小爪的目录
-sudo mkdir -p /var/www/minan1/{backend,frontend,logs,uploads}
-sudo chown -R www-data:www-data /var/www/minan1
+sudo mkdir -p /var/www/lianai1/{backend,frontend,logs,uploads}
+sudo chown -R www-data:www-data /var/www/lianai1
 
 # 另一个 AI 的目录
-sudo mkdir -p /var/www/minan2/{backend,frontend,logs,uploads}
-sudo chown -R www-data:www-data /var/www/minan2
+sudo mkdir -p /var/www/lianai2/{backend,frontend,logs,uploads}
+sudo chown -R www-data:www-data /var/www/lianai2
 ```
 
 ### 3. 创建 systemd 服务
 
-#### 小爪的服务 (minan-game1.service)
+#### 小爪的服务 (lianai-game1.service)
 ```ini
 [Unit]
 Description=Minan Game Backend - AI-1 (develop_copaw)
@@ -66,18 +66,18 @@ After=network.target mysql.service
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/minan1
+WorkingDirectory=/var/www/lianai1
 ExecStart=/usr/bin/java -jar game-1.0.0.jar --server.port=8081
 Restart=on-failure
 RestartSec=10
 Environment="SPRING_PROFILES_ACTIVE=dev1"
-Environment="DB_NAME=minan_game1"
+Environment="DB_NAME=lianai_game1"
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-#### 另一个 AI 的服务 (minan-game2.service)
+#### 另一个 AI 的服务 (lianai-game2.service)
 ```ini
 [Unit]
 Description=Minan Game Backend - AI-2 (develop_openclaw)
@@ -86,12 +86,12 @@ After=network.target mysql.service
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/minan2
+WorkingDirectory=/var/www/lianai2
 ExecStart=/usr/bin/java -jar game-1.0.0.jar --server.port=8082
 Restart=on-failure
 RestartSec=10
 Environment="SPRING_PROFILES_ACTIVE=dev2"
-Environment="DB_NAME=minan_game2"
+Environment="DB_NAME=lianai_game2"
 
 [Install]
 WantedBy=multi-user.target
@@ -108,11 +108,11 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/minan_game1?useUnicode=true&characterEncoding=utf8
+    url: jdbc:mysql://localhost:3306/lianai_game1?useUnicode=true&characterEncoding=utf8
     username: root
     password: root
   application:
-    name: minan-game1
+    name: lianai-game1
 ```
 
 ### application-dev2.yml (另一个 AI)
@@ -122,11 +122,11 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/minan_game2?useUnicode=true&characterEncoding=utf8
+    url: jdbc:mysql://localhost:3306/lianai_game2?useUnicode=true&characterEncoding=utf8
     username: root
     password: root
   application:
-    name: minan-game2
+    name: lianai-game2
 ```
 
 ---
@@ -142,22 +142,22 @@ git checkout develop_copaw
 cd minan-backend && mvn clean package -DskipTests
 
 # 2. 部署
-cp target/game-1.0.0.jar /var/www/minan1/
+cp target/game-1.0.0.jar /var/www/lianai1/
 
 # 3. 启动服务
-sudo systemctl start minan-game1
+sudo systemctl start lianai-game1
 
 # 4. 查看状态
-sudo systemctl status minan-game1
+sudo systemctl status lianai-game1
 
 # 5. 查看日志
-sudo journalctl -u minan-game1 -f
+sudo journalctl -u lianai-game1 -f
 
 # 6. 测试 API
 curl http://localhost:8081/api/health
 
 # 7. 数据库迁移
-mysql -u root -proot minan_game1 < migrations/xxx.sql
+mysql -u root -proot lianai_game1 < migrations/xxx.sql
 ```
 
 ### 另一个 AI 的操作流程
@@ -169,22 +169,22 @@ git checkout develop_openclaw
 cd minan-backend && mvn clean package -DskipTests
 
 # 2. 部署
-cp target/game-1.0.0.jar /var/www/minan2/
+cp target/game-1.0.0.jar /var/www/lianai2/
 
 # 3. 启动服务
-sudo systemctl start minan-game2
+sudo systemctl start lianai-game2
 
 # 4. 查看状态
-sudo systemctl status minan-game2
+sudo systemctl status lianai-game2
 
 # 5. 查看日志
-sudo journalctl -u minan-game2 -f
+sudo journalctl -u lianai-game2 -f
 
 # 6. 测试 API
 curl http://localhost:8082/api/health
 
 # 7. 数据库迁移
-mysql -u root -proot minan_game2 < migrations/xxx.sql
+mysql -u root -proot lianai_game2 < migrations/xxx.sql
 ```
 
 ---
@@ -196,7 +196,7 @@ mysql -u root -proot minan_game2 < migrations/xxx.sql
 server {
     listen 3001;
     server_name localhost;
-    root /var/www/minan1/frontend;
+    root /var/www/lianai1/frontend;
     index index.html;
 
     location / {
@@ -216,7 +216,7 @@ server {
 server {
     listen 3002;
     server_name localhost;
-    root /var/www/minan2/frontend;
+    root /var/www/lianai2/frontend;
     index index.html;
 
     location / {
@@ -237,8 +237,8 @@ server {
 
 | AI | 前端地址 | 后端 API | 数据库 |
 |----|---------|---------|--------|
-| 小爪 | http://server-ip:3001 | http://server-ip:8081/api | minan_game1 |
-| 另一个 AI | http://server-ip:3002 | http://server-ip:8082/api | minan_game2 |
+| 小爪 | http://server-ip:3001 | http://server-ip:8081/api | lianai_game1 |
+| 另一个 AI | http://server-ip:3002 | http://server-ip:8082/api | lianai_game2 |
 
 ---
 
@@ -246,18 +246,18 @@ server {
 
 ### 数据库迁移
 - 每个 AI 只操作自己的数据库
-- 小爪：`minan_game1`
-- 另一个 AI：`minan_game2`
+- 小爪：`lianai_game1`
+- 另一个 AI：`lianai_game2`
 - **不要**操作对方的数据库
 
 ### 服务管理
-- 小爪：`sudo systemctl start minan-game1`
-- 另一个 AI：`sudo systemctl start minan-game2`
+- 小爪：`sudo systemctl start lianai-game1`
+- 另一个 AI：`sudo systemctl start lianai-game2`
 - **不要**操作对方的服务
 
 ### 代码部署
-- 小爪：`/var/www/minan1/`
-- 另一个 AI：`/var/www/minan2/`
+- 小爪：`/var/www/lianai1/`
+- 另一个 AI：`/var/www/lianai2/`
 - **不要**覆盖对方的文件
 
 ---
@@ -272,11 +272,11 @@ set -e
 echo "🚀 部署小爪的环境 (AI-1)..."
 cd /root/.copaw/data/minan/minan-backend
 mvn clean package -DskipTests
-cp target/game-1.0.0.jar /var/www/minan1/
-sudo systemctl restart minan-game1
+cp target/game-1.0.0.jar /var/www/lianai1/
+sudo systemctl restart lianai-game1
 echo "✅ 部署完成！"
 echo "📊 服务状态:"
-sudo systemctl status minan-game1 --no-pager
+sudo systemctl status lianai-game1 --no-pager
 ```
 
 ### 另一个 AI 的快捷脚本
@@ -287,11 +287,11 @@ set -e
 echo "🚀 部署另一个 AI 的环境 (AI-2)..."
 cd /root/.copaw/data/minan/minan-backend
 mvn clean package -DskipTests
-cp target/game-1.0.0.jar /var/www/minan2/
-sudo systemctl restart minan-game2
+cp target/game-1.0.0.jar /var/www/lianai2/
+sudo systemctl restart lianai-game2
 echo "✅ 部署完成！"
 echo "📊 服务状态:"
-sudo systemctl status minan-game2 --no-pager
+sudo systemctl status lianai-game2 --no-pager
 ```
 
 ---
@@ -302,17 +302,17 @@ sudo systemctl status minan-game2 --no-pager
 
 ```bash
 # 1. 创建数据库
-mysql -u root -proot -e "CREATE DATABASE minan_game1 DEFAULT CHARACTER SET utf8mb4;"
-mysql -u root -proot -e "CREATE DATABASE minan_game2 DEFAULT CHARACTER SET utf8mb4;"
+mysql -u root -proot -e "CREATE DATABASE lianai_game1 DEFAULT CHARACTER SET utf8mb4;"
+mysql -u root -proot -e "CREATE DATABASE lianai_game2 DEFAULT CHARACTER SET utf8mb4;"
 
 # 2. 创建目录
-sudo mkdir -p /var/www/minan1/{backend,frontend,logs,uploads}
-sudo mkdir -p /var/www/minan2/{backend,frontend,logs,uploads}
-sudo chown -R www-data:www-data /var/www/minan1 /var/www/minan2
+sudo mkdir -p /var/www/lianai1/{backend,frontend,logs,uploads}
+sudo mkdir -p /var/www/lianai2/{backend,frontend,logs,uploads}
+sudo chown -R www-data:www-data /var/www/lianai1 /var/www/lianai2
 
 # 3. 安装 systemd 服务
-sudo cp deployment/minan-game1.service /etc/systemd/system/
-sudo cp deployment/minan-game2.service /etc/systemd/system/
+sudo cp deployment/lianai-game1.service /etc/systemd/system/
+sudo cp deployment/lianai-game2.service /etc/systemd/system/
 sudo systemctl daemon-reload
 
 # 4. 配置 Nginx
@@ -323,10 +323,10 @@ sudo systemctl reload nginx
 
 # 5. 初始化数据库（两个 AI 各自执行）
 # 小爪:
-mysql -u root -proot minan_game1 < migrations/20260305_ai_dual_role_complete.sql
+mysql -u root -proot lianai_game1 < migrations/20260305_ai_dual_role_complete.sql
 
 # 另一个 AI:
-mysql -u root -proot minan_game2 < migrations/20260305_ai_dual_role_complete.sql
+mysql -u root -proot lianai_game2 < migrations/20260305_ai_dual_role_complete.sql
 ```
 
 ---

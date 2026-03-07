@@ -1,10 +1,12 @@
-# Minan 后端应用配置文件 (application-prod.yml)
+# LianAI 后端应用配置文件 (application-prod.yml)
 
 spring:
+  application:
+    name: lianai-game
   datasource:
-    url: jdbc:mysql://localhost:3306/minan?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: minan_user
-    password: your_secure_password
+    url: jdbc:mysql://localhost:3306/${DB_NAME:lianai_game1}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
     
   jackson:
@@ -30,11 +32,11 @@ sa-token:
 
 # 服务器端口
 server:
-  port: 8080
+  port: ${SERVER_PORT:8081}
 
 # 日志配置
 logging:
   level:
-    com.minan: INFO
+    com.lianai: INFO
   file:
-    name: /var/www/minan/logs/backend.log
+    name: /var/www/lianai1/logs/backend.log

@@ -5,12 +5,12 @@
 | 资源 | 小爪 (AI-1) | 另一个 AI (AI-2) |
 |------|-----------|----------------|
 | **分支** | `develop_copaw` | `develop_openclaw` |
-| **数据库** | `minan_game1` | `minan_game2` |
+| **数据库** | `lianai_game1` | `lianai_game2` |
 | **后端端口** | `8081` | `8082` |
 | **前端端口** | `3001` | `3002` |
-| **部署目录** | `/var/www/minan1/` | `/var/www/minan2/` |
-| **Systemd 服务** | `minan-game1` | `minan-game2` |
-| **日志** | `journalctl -u minan-game1` | `journalctl -u minan-game2` |
+| **部署目录** | `/var/www/lianai1/` | `/var/www/lianai2/` |
+| **Systemd 服务** | `lianai-game1` | `lianai-game2` |
+| **日志** | `journalctl -u lianai-game1` | `journalctl -u lianai-game2` |
 
 ---
 
@@ -53,49 +53,49 @@ sudo ./scripts/setup_multi_ai_env.sh
 ### 小爪 (AI-1)
 ```bash
 # 启动服务
-sudo systemctl start minan-game1
+sudo systemctl start lianai-game1
 
 # 重启服务
-sudo systemctl restart minan-game1
+sudo systemctl restart lianai-game1
 
 # 停止服务
-sudo systemctl stop minan-game1
+sudo systemctl stop lianai-game1
 
 # 查看状态
-sudo systemctl status minan-game1
+sudo systemctl status lianai-game1
 
 # 查看日志
-sudo journalctl -u minan-game1 -f
+sudo journalctl -u lianai-game1 -f
 
 # 数据库操作
-mysql -u root -proot minan_game1
+mysql -u root -proot lianai_game1
 
 # 数据库迁移
-mysql -u root -proot minan_game1 < migrations/xxx.sql
+mysql -u root -proot lianai_game1 < migrations/xxx.sql
 ```
 
 ### 另一个 AI (AI-2)
 ```bash
 # 启动服务
-sudo systemctl start minan-game2
+sudo systemctl start lianai-game2
 
 # 重启服务
-sudo systemctl restart minan-game2
+sudo systemctl restart lianai-game2
 
 # 停止服务
-sudo systemctl stop minan-game2
+sudo systemctl stop lianai-game2
 
 # 查看状态
-sudo systemctl status minan-game2
+sudo systemctl status lianai-game2
 
 # 查看日志
-sudo journalctl -u minan-game2 -f
+sudo journalctl -u lianai-game2 -f
 
 # 数据库操作
-mysql -u root -proot minan_game2
+mysql -u root -proot lianai_game2
 
 # 数据库迁移
-mysql -u root -proot minan_game2 < migrations/xxx.sql
+mysql -u root -proot lianai_game2 < migrations/xxx.sql
 ```
 
 ---
@@ -104,23 +104,23 @@ mysql -u root -proot minan_game2 < migrations/xxx.sql
 
 | AI | 前端 | 后端 API | 数据库 |
 |----|------|---------|--------|
-| 小爪 | http://server-ip:3001 | http://server-ip:8081/api | minan_game1 |
-| 另一个 AI | http://server-ip:3002 | http://server-ip:8082/api | minan_game2 |
+| 小爪 | http://server-ip:3001 | http://server-ip:8081/api | lianai_game1 |
+| 另一个 AI | http://server-ip:3002 | http://server-ip:8082/api | lianai_game2 |
 
 ---
 
 ## ⚠️ 注意事项
 
 ### ✅ 可以做
-- 随便修改自己的数据库 `minan_game1`
-- 随时重启自己的服务 `minan-game1`
+- 随便修改自己的数据库 `lianai_game1`
+- 随时重启自己的服务 `lianai-game1`
 - 测试任何功能，不影响对方
 - 独立部署，独立调试
 
 ### ❌ 不要做
-- 不要操作对方的数据库 `minan_game2`
-- 不要停止对方的服务 `minan-game2`
-- 不要覆盖对方的部署目录 `/var/www/minan2/`
+- 不要操作对方的数据库 `lianai_game2`
+- 不要停止对方的服务 `lianai-game2`
+- 不要覆盖对方的部署目录 `/var/www/lianai2/`
 - 不要占用对方的端口 `8082`, `3002`
 
 ---
@@ -130,22 +130,22 @@ mysql -u root -proot minan_game2 < migrations/xxx.sql
 ### 服务启动失败
 ```bash
 # 查看日志
-sudo journalctl -u minan-game1 -f
+sudo journalctl -u lianai-game1 -f
 
 # 检查端口占用
 netstat -tlnp | grep 8081
 
 # 检查数据库连接
-mysql -u root -proot minan_game1 -e "SELECT 1"
+mysql -u root -proot lianai_game1 -e "SELECT 1"
 ```
 
 ### 数据库连接失败
 ```bash
 # 检查数据库是否存在
-mysql -u root -proot -e "SHOW DATABASES LIKE 'minan_game1'"
+mysql -u root -proot -e "SHOW DATABASES LIKE 'lianai_game1'"
 
 # 重新初始化数据库
-mysql -u root -proot minan_game1 < migrations/20260305_ai_dual_role_complete.sql
+mysql -u root -proot lianai_game1 < migrations/20260305_ai_dual_role_complete.sql
 ```
 
 ### 端口冲突
@@ -154,11 +154,11 @@ mysql -u root -proot minan_game1 < migrations/20260305_ai_dual_role_complete.sql
 netstat -tlnp | grep 8081
 
 # 如果是旧服务，停止它
-sudo systemctl stop minan-game1
+sudo systemctl stop lianai-game1
 sudo kill -9 $(lsof -t -i:8081)
 
 # 重新启动
-sudo systemctl start minan-game1
+sudo systemctl start lianai-game1
 ```
 
 ---

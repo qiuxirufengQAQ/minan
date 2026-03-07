@@ -231,7 +231,7 @@ ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对
 **检查方法**:
 ```bash
 # 查看数据库表结构
-mysql -u root -proot minan_game1 -e "DESC evaluation;"
+mysql -u root -proot lianai_game1 -e "DESC evaluation;"
 
 # 查看 Model 类字段
 grep "private" src/main/java/com/minan/game/model/Evaluation.java
@@ -370,14 +370,14 @@ cd /root/.copaw/data/minan/minan-backend/scripts
 ### 查看服务器日志
 ```bash
 # 实时查看日志
-journalctl -u minan-game1 -f
+journalctl -u lianai-game1 -f
 
 # 查看最近 100 行
-journalctl -u minan-game1 -n 100 --no-pager
+journalctl -u lianai-game1 -n 100 --no-pager
 
 # 查看特定错误
-journalctl -u minan-game1 | grep -i "error"
-journalctl -u minan-game1 | grep "Unknown column"  # 数据库字段错误
+journalctl -u lianai-game1 | grep -i "error"
+journalctl -u lianai-game1 | grep "Unknown column"  # 数据库字段错误
 ```
 
 ### 测试单个接口
@@ -398,7 +398,7 @@ curl -X POST "http://localhost:8081/api/users/login" \
 mysql -u root -proot
 
 # 使用数据库
-use minan_game1;
+use lianai_game1;
 
 # 检查表结构
 DESC evaluation;
@@ -412,7 +412,7 @@ SELECT * FROM scene LIMIT 5;
 
 **报告生成完成** 🎉  
 **下次测试前请确保**:
-1. 后端服务正在运行 (`systemctl status minan-game1`)
+1. 后端服务正在运行 (`systemctl status lianai-game1`)
 2. 数据库连接正常
 3. 测试用户存在且密码正确
 
