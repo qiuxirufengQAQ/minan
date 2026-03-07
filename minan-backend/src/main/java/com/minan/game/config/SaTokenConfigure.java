@@ -19,6 +19,10 @@ public class SaTokenConfigure implements WebMvcConfigurer {
             // 登录校验 -- 拦截所有路由，并排除 /api/auth/** 用于开放登录
             StpUtil.checkLogin();
         })).addPathPatterns("/api/**")
-          .excludePathPatterns("/api/auth/**");
+          .excludePathPatterns(
+              "/api/auth/**",
+              "/api/users/login",
+              "/api/users/register"
+          );
     }
 }

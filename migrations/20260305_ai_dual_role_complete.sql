@@ -26,8 +26,8 @@ CREATE TABLE IF NOT EXISTS `ai_config` (
 
 -- 初始化 AI 配置数据
 INSERT INTO `ai_config` (`config_key`, `config_value`, `config_type`, `description`) VALUES
-('qwen_api_key', 'YOUR_API_KEY_HERE', 'encrypted', '通义千问 API 密钥'),
-('qwen_base_url', 'https://dashscope.aliyuncs.com/api/v1', 'string', '通义千问 API 基础 URL'),
+('ai_api_key', 'YOUR_API_KEY_HERE', 'encrypted', 'AI API 密钥（支持多供应商）'),
+('ai_base_url', 'https://dashscope.aliyuncs.com/api/v1', 'string', 'AI API 基础 URL'),
 ('npc_model', 'qwen-plus', 'string', 'AI NPC 使用模型'),
 ('npc_max_tokens', '500', 'string', 'AI NPC 每轮最大 tokens'),
 ('npc_temperature', '0.8', 'string', 'AI NPC 温度参数（创造性）'),

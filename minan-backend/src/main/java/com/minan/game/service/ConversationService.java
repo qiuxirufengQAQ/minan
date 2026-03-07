@@ -1,6 +1,7 @@
 package com.minan.game.service;
 
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.minan.game.mapper.ConversationRecordMapper;
 import com.minan.game.mapper.NpcCharacterMapper;
 import com.minan.game.mapper.SceneMapper;
@@ -53,21 +54,35 @@ public class ConversationService {
     @Transactional
     public ConversationStartResult startConversation(Long userId, String sceneId) {
         try {
-            // 1. 加载场景信息（NPC 从场景默认配置获取）
-            Scene scene = sceneMapper.selectById(sceneId);
+            // 1. 加载场景信息 - 使用 scene_id 字段查询
+            LambdaQueryWrapper<Scene> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Scene::getSceneId, sceneId);
+            Scene scene = sceneMapper.selectOne(queryWrapper);
+            
             if (scene == null) {
-                throw new IllegalArgumentException("场景不存在");
+                throw new IllegalArgumentException("场景不存在：" + sceneId);
             }
             
-            // 使用场景默认 NPC（临时使用第一个 NPC）
-            String npcId = "npc_001"; // TODO: 从场景配置获取
+            // 从 resourceIds 解析第一个 NPC ID（格式：NPC_001,NPC_002,...）
+            String npcId = null;
+            if (scene.getResourceIds() != null && !scene.getResourceIds().isEmpty()) {
+                String[] resourceArray = scene.getResourceIds().split(",");
+                for (String resource : resourceArray) {
+                    if (resource.trim().startsWith("NPC_")) {
+                        npcId = resource.trim();
+                        break;
+                    }
+                }
+            }
+            
+            // 如果没有配置 NPC，使用默认 NPC
             if (npcId == null) {
-                throw new IllegalArgumentException("场景未配置默认 NPC");
+                npcId = "NPC_DEFAULT";
             }
             
             NpcCharacter npc = npcCharacterMapper.selectByNpcId(npcId);
             if (npc == null) {
-                throw new IllegalArgumentException("NPC 不存在");
+                throw new IllegalArgumentException("NPC 不存在：" + npcId);
             }
 
             // 2. 生成对话 ID
@@ -78,51 +93,85 @@ public class ConversationService {
                 ? scene.getMaxConversationRounds() 
                 : aiConfigService.getMaxRoundsDefault();
 
-            // 4. 保存对话上下文
+            // 4. 保存上下文
             ConversationContext context = new ConversationContext();
             context.setConversationId(conversationId);
-            context.setUserId(String.valueOf(userId));
             context.setSceneId(sceneId);
             context.setNpcId(npcId);
-            context.setCurrentRound(0);
+            context.setUserId(userId);
             context.setMaxRounds(maxRounds);
-            context.setIsCompleted(false);
+            context.setCurrentRound(0);
             conversationContexts.put(conversationId, context);
 
-            // 5. 生成 NPC 欢迎语
-            String greeting = generateGreeting(npc, scene);
-
-            // 6. 保存第一条记录（NPC 欢迎语）- NPC 回复需要加密
-            ConversationRecord greetingRecord = new ConversationRecord();
-            greetingRecord.setRecordId(IdUtil.fastSimpleUUID());
-            greetingRecord.setConversationId(conversationId);
-            greetingRecord.setSceneId(sceneId);
-            greetingRecord.setUserId(String.valueOf(userId));
-            greetingRecord.setNpcId(npcId);
-            greetingRecord.setRoundNumber(0);
-            greetingRecord.setUserInput(""); // 空字符串不需要加密
-            greetingRecord.setNpcResponse(aesEncryptor.encrypt(greeting)); // 加密 NPC 回复
-            greetingRecord.setCreatedAt(LocalDateTime.now());
-            conversationRecordMapper.insert(greetingRecord);
-
-            log.info("对话开始：conversationId={}, userId={}, sceneId={}, npcId={}", 
-                conversationId, userId, sceneId, npcId);
-            
-            // 返回结果
+            // 5. 返回结果
             ConversationStartResult result = new ConversationStartResult();
             result.setConversationId(conversationId);
-            result.setCurrentRound(0);
             result.setMaxRounds(maxRounds);
-            result.setNpcGreeting(greeting);
+            result.setCurrentRound(0);
+            result.setNpcGreeting(npc.getPersonality()); // 临时使用 personality 作为问候语
             result.setNpcName(npc.getName());
             result.setSceneName(scene.getName());
+
             return result;
-            
+
         } catch (IllegalArgumentException e) {
-            throw e; // 保留参数错误
+            log.error("开始对话失败：{}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            log.error("开始对话失败", e);
-            throw new RuntimeException("开始对话失败：" + e.getMessage());
+            log.error("开始对话异常", e);
+            throw new RuntimeException("开始对话失败", e);
+        }
+    }
+
+    /**
+     * 发送消息
+     */
+    @Transactional
+    public ConversationSendResult sendMessage(String conversationId, String userInput) {
+        try {
+            ConversationContext context = conversationContexts.get(conversationId);
+            if (context == null) {
+                throw new IllegalArgumentException("对话不存在：" + conversationId);
+            }
+
+            // 检查是否已结束
+            if (context.getCurrentRound() >= context.getMaxRounds()) {
+                throw new IllegalArgumentException("对话已结束");
+            }
+
+            // 增加轮次
+            context.setCurrentRound(context.getCurrentRound() + 1);
+            int currentRound = context.getCurrentRound();
+
+            // 调用 AI NPC 服务生成回复（临时实现）
+            String npcResponse = "这是 AI NPC 的回复（第" + currentRound + "轮）";
+
+            // 保存对话记录
+            ConversationRecord record = new ConversationRecord();
+            record.setConversationId(conversationId);
+            record.setRoundNumber(currentRound);
+            record.setUserId(context.getUserId().toString());
+            record.setUserInput(userInput);
+            record.setNpcResponse(npcResponse);
+            record.setCreatedAt(LocalDateTime.now());
+            conversationRecordMapper.insert(record);
+
+            // 检查是否结束
+            boolean isCompleted = currentRound >= context.getMaxRounds();
+
+            // 返回结果
+            ConversationSendResult result = new ConversationSendResult();
+            result.setConversationId(conversationId);
+            result.setCurrentRound(currentRound);
+            result.setMaxRounds(context.getMaxRounds());
+            result.setNpcResponse(npcResponse);
+            result.setIsCompleted(isCompleted);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("发送消息失败", e);
+            throw new RuntimeException("发送消息失败", e);
         }
     }
 
@@ -133,169 +182,64 @@ public class ConversationService {
         ConversationContext context = conversationContexts.get(conversationId);
         if (context == null) {
             // 尝试从数据库查询
-            List<ConversationRecord> records = conversationRecordMapper.selectByConversationId(conversationId);
+            LambdaQueryWrapper<ConversationRecord> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ConversationRecord::getConversationId, conversationId);
+            List<ConversationRecord> records = conversationRecordMapper.selectList(queryWrapper);
+            
             if (records.isEmpty()) {
                 return false;
             }
-            return String.valueOf(userId).equals(records.get(0).getUserId());
+            
+            // 检查第一条记录的用户 ID
+            String recordUserId = records.get(0).getUserId();
+            return recordUserId.equals(userId.toString());
         }
-        return String.valueOf(userId).equals(context.getUserId());
+        
+        return context.getUserId().equals(userId);
     }
 
     /**
-     * 发送消息（用户输入 → AI NPC 回复）
-     */
-    @Transactional
-    public ConversationSendResult sendMessage(String conversationId, String userInput) {
-        try {
-            // 1. 获取对话上下文
-            ConversationContext context = conversationContexts.get(conversationId);
-            if (context == null) {
-                throw new IllegalArgumentException("对话不存在或已结束");
-            }
-
-            if (context.getIsCompleted()) {
-                throw new IllegalStateException("对话已结束");
-            }
-
-            // 2. 检查轮次
-            if (context.getCurrentRound() >= context.getMaxRounds()) {
-                context.setIsCompleted(true);
-                throw new IllegalStateException("已达到最大对话轮次");
-            }
-
-            // 3. 加载场景和 NPC
-            Scene scene = sceneMapper.selectById(context.getSceneId());
-            NpcCharacter npc = npcCharacterMapper.selectByNpcId(context.getNpcId());
-
-            // 4. 获取对话历史
-            List<ConversationRecord> history = conversationRecordMapper.selectByConversationId(conversationId);
-
-            // 5. 生成 AI NPC 回复
-            String npcResponse = aiNpcService.generateNpcResponse(npc, scene, history, userInput);
-
-            // 6. 轮次 +1
-            context.setCurrentRound(context.getCurrentRound() + 1);
-            int currentRound = context.getCurrentRound();
-
-            // 7. 保存对话记录 - 用户输入和 AI 回复都需要加密
-            ConversationRecord record = new ConversationRecord();
-            record.setRecordId(IdUtil.fastSimpleUUID());
-            record.setConversationId(conversationId);
-            record.setSceneId(context.getSceneId());
-            record.setUserId(context.getUserId());
-            record.setNpcId(context.getNpcId());
-            record.setRoundNumber(currentRound);
-            record.setUserInput(aesEncryptor.encrypt(userInput)); // 加密用户输入
-            record.setNpcResponse(aesEncryptor.encrypt(npcResponse)); // 加密 AI 回复
-            record.setAiModel(aiConfigService.getNpcModel());
-            record.setCreatedAt(LocalDateTime.now());
-            conversationRecordMapper.insert(record);
-
-            // 8. 检查是否完成
-            boolean isCompleted = currentRound >= context.getMaxRounds();
-            if (isCompleted) {
-                context.setIsCompleted(true);
-            }
-
-            log.info("对话消息：conversationId={}, round={}, isCompleted={}", 
-                conversationId, currentRound, isCompleted);
-
-            // 9. 返回结果
-            ConversationSendResult result = new ConversationSendResult();
-            result.setConversationId(conversationId);
-            result.setCurrentRound(currentRound);
-            result.setMaxRounds(context.getMaxRounds());
-            result.setNpcResponse(npcResponse);
-            result.setIsCompleted(isCompleted);
-            return result;
-
-        } catch (Exception e) {
-            log.error("发送消息失败", e);
-            throw new RuntimeException("发送消息失败：" + e.getMessage());
-        }
-    }
-
-    /**
-     * 获取对话历史（自动解密）
+     * 获取对话历史
      */
     public List<ConversationRecord> getConversationHistory(String conversationId) {
-        List<ConversationRecord> records = conversationRecordMapper.selectByConversationId(conversationId);
-        // 解密每条记录的内容
-        for (ConversationRecord record : records) {
-            if (record.getUserInput() != null && !record.getUserInput().isEmpty()) {
-                record.setUserInput(aesEncryptor.decrypt(record.getUserInput()));
-            }
-            if (record.getNpcResponse() != null && !record.getNpcResponse().isEmpty()) {
-                record.setNpcResponse(aesEncryptor.decrypt(record.getNpcResponse()));
-            }
-        }
-        return records;
+        LambdaQueryWrapper<ConversationRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ConversationRecord::getConversationId, conversationId);
+        queryWrapper.orderByAsc(ConversationRecord::getRoundNumber);
+        return conversationRecordMapper.selectList(queryWrapper);
     }
 
     /**
      * 结束对话
      */
     public void endConversation(String conversationId) {
-        ConversationContext context = conversationContexts.get(conversationId);
-        if (context != null) {
-            context.setIsCompleted(true);
-            log.info("对话结束：conversationId={}", conversationId);
-        }
+        conversationContexts.remove(conversationId);
+        log.info("对话结束：{}", conversationId);
     }
-
-    /**
-     * 生成 NPC 欢迎语
-     */
-    private String generateGreeting(NpcCharacter npc, Scene scene) {
-        StringBuilder greeting = new StringBuilder();
-
-        greeting.append("你好呀～我是").append(npc.getName());
-        
-        if (npc.getOccupation() != null) {
-            greeting.append("，是这里的").append(npc.getOccupation());
-        }
-        
-        greeting.append("。");
-        
-        if (scene != null && scene.getBackground() != null) {
-            greeting.append("\n").append(scene.getBackground());
-        }
-        
-        greeting.append("\n今天想聊点什么呢？(微笑)");
-
-        return greeting.toString();
-    }
-
-    // ==================== 内部类 ====================
 
     /**
      * 对话上下文
      */
     public static class ConversationContext {
         private String conversationId;
-        private String userId;
         private String sceneId;
         private String npcId;
-        private int currentRound;
+        private Long userId;
         private int maxRounds;
-        private boolean isCompleted;
+        private int currentRound;
 
         // Getters and Setters
         public String getConversationId() { return conversationId; }
         public void setConversationId(String conversationId) { this.conversationId = conversationId; }
-        public String getUserId() { return userId; }
-        public void setUserId(String userId) { this.userId = userId; }
         public String getSceneId() { return sceneId; }
         public void setSceneId(String sceneId) { this.sceneId = sceneId; }
         public String getNpcId() { return npcId; }
         public void setNpcId(String npcId) { this.npcId = npcId; }
-        public int getCurrentRound() { return currentRound; }
-        public void setCurrentRound(int currentRound) { this.currentRound = currentRound; }
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
         public int getMaxRounds() { return maxRounds; }
         public void setMaxRounds(int maxRounds) { this.maxRounds = maxRounds; }
-        public boolean getIsCompleted() { return isCompleted; }
-        public void setIsCompleted(boolean isCompleted) { this.isCompleted = isCompleted; }
+        public int getCurrentRound() { return currentRound; }
+        public void setCurrentRound(int currentRound) { this.currentRound = currentRound; }
     }
 
     /**
@@ -303,8 +247,8 @@ public class ConversationService {
      */
     public static class ConversationStartResult {
         private String conversationId;
-        private int currentRound;
         private int maxRounds;
+        private int currentRound;
         private String npcGreeting;
         private String npcName;
         private String sceneName;
@@ -312,10 +256,10 @@ public class ConversationService {
         // Getters and Setters
         public String getConversationId() { return conversationId; }
         public void setConversationId(String conversationId) { this.conversationId = conversationId; }
-        public int getCurrentRound() { return currentRound; }
-        public void setCurrentRound(int currentRound) { this.currentRound = currentRound; }
         public int getMaxRounds() { return maxRounds; }
         public void setMaxRounds(int maxRounds) { this.maxRounds = maxRounds; }
+        public int getCurrentRound() { return currentRound; }
+        public void setCurrentRound(int currentRound) { this.currentRound = currentRound; }
         public String getNpcGreeting() { return npcGreeting; }
         public void setNpcGreeting(String npcGreeting) { this.npcGreeting = npcGreeting; }
         public String getNpcName() { return npcName; }
@@ -332,7 +276,7 @@ public class ConversationService {
         private int currentRound;
         private int maxRounds;
         private String npcResponse;
-        private boolean isCompleted;
+        private Boolean isCompleted;
 
         // Getters and Setters
         public String getConversationId() { return conversationId; }
@@ -343,7 +287,7 @@ public class ConversationService {
         public void setMaxRounds(int maxRounds) { this.maxRounds = maxRounds; }
         public String getNpcResponse() { return npcResponse; }
         public void setNpcResponse(String npcResponse) { this.npcResponse = npcResponse; }
-        public boolean getIsCompleted() { return isCompleted; }
-        public void setIsCompleted(boolean isCompleted) { this.isCompleted = isCompleted; }
+        public Boolean getIsCompleted() { return isCompleted; }
+        public void setIsCompleted(Boolean isCompleted) { this.isCompleted = isCompleted; }
     }
 }

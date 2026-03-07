@@ -51,3 +51,11 @@ app:
 # 跨域配置（开发环境）
 cors:
   allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+# Sa-Token 配置
+sa-token:
+  token-name: satoken
+  timeout: 2592000
+  activity-timeout: -1
+  is-concurrent: true
+  is-share: false

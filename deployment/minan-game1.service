@@ -1,0 +1,43 @@
+[Unit]
+Description=Minan Game Backend - AI-1 (develop_copaw)
+Documentation=https://github.com/qiuxirufengQAQ/minan
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/minan1
+
+# 启动命令 - 端口 8081
+ExecStart=/usr/bin/java -jar game-1.0.0.jar --server.port=8081
+
+# 重启策略
+Restart=on-failure
+RestartSec=10
+
+# 资源限制
+LimitNOFILE=65535
+LimitNPROC=4096
+
+# 超时设置
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=minan-game1
+
+# 环境变量 - 关键！确保隔离
+Environment="SERVER_PORT=8081"
+Environment="DB_NAME=minan_game1"
+Environment="SPRING_PROFILES_ACTIVE=ai1"
+Environment="JAVA_OPTS=-Xms512m -Xmx2g"
+
+# PID 文件
+PIDFile=/var/www/minan1/app.pid
+
+[Install]
+WantedBy=multi-user.target

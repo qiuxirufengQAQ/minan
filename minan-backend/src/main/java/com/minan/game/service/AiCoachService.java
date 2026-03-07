@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -132,107 +133,208 @@ public class AiCoachService {
     }
 
     /**
-     * 调用 AI API
+     * 调用 AI API（带重试机制）
      */
     private String callAiApi(String systemPrompt, String userPrompt) throws Exception {
-        List<Message> messages = new ArrayList<>();
+        int maxRetries = 3;
+        int retryDelay = 1000; // 1 秒
+        int attempt = 0;
+        Exception lastException = null;
 
-        // 添加 System Message
-        messages.add(Message.builder()
-            .role(Role.SYSTEM.getValue())
-            .content(systemPrompt)
-            .build());
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                log.debug("AI API 调用尝试 {}/{}", attempt, maxRetries);
 
-        // 添加 User Message
-        messages.add(Message.builder()
-            .role(Role.USER.getValue())
-            .content(userPrompt)
-            .build());
+                List<Message> messages = new ArrayList<>();
 
-        // 构建请求参数
-        GenerationParam param = GenerationParam.builder()
-            .apiKey(aiConfigService.getApiKey())
-            .model(aiConfigService.getCoachModel())
-            .messages(messages)
-            .maxTokens(aiConfigService.getCoachMaxTokens())
-            .temperature(Float.parseFloat(String.valueOf(aiConfigService.getCoachTemperature())))
-            .resultFormat(GenerationParam.ResultFormat.MESSAGE)
-            .build();
+                // 添加 System Message
+                messages.add(Message.builder()
+                    .role(Role.SYSTEM.getValue())
+                    .content(systemPrompt)
+                    .build());
 
-        // 调用 API
-        GenerationResult result = generation.call(param);
+                // 添加 User Message
+                messages.add(Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(userPrompt)
+                    .build());
 
-        if (result != null && result.getOutput() != null && result.getOutput().getChoices() != null) {
-            return result.getOutput().getChoices().get(0).getMessage().getContent();
-        } else {
-            throw new Exception("AI API 调用失败");
+                // 构建请求参数
+                GenerationParam param = GenerationParam.builder()
+                    .apiKey(aiConfigService.getApiKey())
+                    .model(aiConfigService.getCoachModel())
+                    .messages(messages)
+                    .maxTokens(aiConfigService.getCoachMaxTokens())
+                    .temperature(Float.parseFloat(String.valueOf(aiConfigService.getCoachTemperature())))
+                    .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                    .build();
+
+                // 调用 API
+                GenerationResult result = generation.call(param);
+
+                if (result != null && result.getOutput() != null && result.getOutput().getChoices() != null) {
+                    String content = result.getOutput().getChoices().get(0).getMessage().getContent();
+                    if (attempt > 1) {
+                        log.info("AI API 调用在第 {} 次重试成功", attempt);
+                    }
+                    return content;
+                } else {
+                    throw new Exception("AI API 调用失败：" + (result != null ? result.getRequestId() : "无响应"));
+                }
+
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("AI API 调用失败 (尝试 {}/{}): {}", attempt, maxRetries, e.getMessage());
+                
+                if (attempt < maxRetries) {
+                    try {
+                        Thread.sleep(retryDelay * attempt); // 指数退避
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new Exception("重试被中断", ie);
+                    }
+                }
+            }
         }
+
+        throw new Exception("AI API 调用失败，已重试 " + maxRetries + " 次", lastException);
     }
 
     /**
-     * 解析评估结果
+     * 解析评估结果（容错增强版）
      */
     private EvaluationResult parseEvaluationResult(String response) throws JsonProcessingException {
         log.info("AI 教练原始回复：{}", response.substring(0, Math.min(200, response.length())));
 
-        // 尝试提取 JSON（AI 可能返回 markdown 格式）
-        String jsonStr = extractJson(response);
+        try {
+            // 尝试提取 JSON（AI 可能返回 markdown 格式）
+            String jsonStr = extractJson(response);
+            JsonNode root = objectMapper.readTree(jsonStr);
 
-        JsonNode root = objectMapper.readTree(jsonStr);
+            EvaluationResult result = new EvaluationResult();
 
-        EvaluationResult result = new EvaluationResult();
-
-        // 解析总分
-        if (root.has("totalScore")) {
-            result.setTotalScore(root.get("totalScore").asDouble());
-        }
-
-        // 解析维度得分
-        if (root.has("dimensionScores")) {
-            Map<String, Integer> scores = new HashMap<>();
-            JsonNode dimNode = root.get("dimensionScores");
-            if (dimNode.has("共情能力")) {
-                scores.put("共情能力", dimNode.get("共情能力").asInt());
+            // 解析总分（容错：支持整数和浮点数）
+            if (root.has("totalScore")) {
+                result.setTotalScore(root.get("totalScore").asDouble());
+            } else if (root.has("score")) {
+                // 兼容不同的字段名
+                result.setTotalScore(root.get("score").asDouble());
             }
-            if (dimNode.has("沟通技巧")) {
-                scores.put("沟通技巧", dimNode.get("沟通技巧").asInt());
+
+            // 解析维度得分（动态解析所有维度，而非硬编码）
+            if (root.has("dimensionScores")) {
+                Map<String, Integer> scores = new HashMap<>();
+                JsonNode dimNode = root.get("dimensionScores");
+                
+                if (dimNode != null && dimNode.isObject()) {
+                    // 动态遍历所有维度字段
+                    Iterator<Map.Entry<String, JsonNode>> fields = dimNode.fields();
+                    while (fields.hasNext()) {
+                        Map.Entry<String, JsonNode> entry = fields.next();
+                        try {
+                            String fieldName = entry.getKey();
+                            JsonNode valueNode = entry.getValue();
+                            if (valueNode != null && valueNode.isNumber()) {
+                                scores.put(fieldName, valueNode.asInt());
+                            }
+                        } catch (Exception e) {
+                            log.warn("解析维度 {} 失败：{}", entry.getKey(), e.getMessage());
+                        }
+                    }
+                    
+                    // 如果动态解析没有结果，使用默认维度（向后兼容）
+                    if (scores.isEmpty()) {
+                        log.warn("未解析到维度得分，使用默认维度");
+                        scores = buildDefaultDimensionScores();
+                    }
+                }
+                result.setDimensionScores(scores);
             }
-            if (dimNode.has("幽默感")) {
-                scores.put("幽默感", dimNode.get("幽默感").asInt());
+
+            // 解析优点（容错：支持数组和字符串）
+            if (root.has("strengths")) {
+                List<String> strengths = new ArrayList<>();
+                JsonNode strengthsNode = root.get("strengths");
+                if (strengthsNode != null && strengthsNode.isArray()) {
+                    strengthsNode.forEach(node -> {
+                        if (node != null && !node.asText().isEmpty()) {
+                            strengths.add(node.asText());
+                        }
+                    });
+                } else if (strengthsNode != null && !strengthsNode.asText().isEmpty()) {
+                    // 如果是字符串，按换行分割
+                    String[] items = strengthsNode.asText().split("\\n");
+                    for (String item : items) {
+                        String trimmed = item.trim().replaceAll("^[-*•]\\s*", "");
+                        if (!trimmed.isEmpty()) {
+                            strengths.add(trimmed);
+                        }
+                    }
+                }
+                result.setStrengths(strengths);
             }
-            if (dimNode.has("边界感")) {
-                scores.put("边界感", dimNode.get("边界感").asInt());
+
+            // 解析建议（容错处理同上）
+            if (root.has("suggestions")) {
+                List<String> suggestions = new ArrayList<>();
+                JsonNode suggestionsNode = root.get("suggestions");
+                if (suggestionsNode != null && suggestionsNode.isArray()) {
+                    suggestionsNode.forEach(node -> {
+                        if (node != null && !node.asText().isEmpty()) {
+                            suggestions.add(node.asText());
+                        }
+                    });
+                } else if (suggestionsNode != null && !suggestionsNode.asText().isEmpty()) {
+                    String[] items = suggestionsNode.asText().split("\\n");
+                    for (String item : items) {
+                        String trimmed = item.trim().replaceAll("^[-*•]\\s*", "");
+                        if (!trimmed.isEmpty()) {
+                            suggestions.add(trimmed);
+                        }
+                    }
+                }
+                result.setSuggestions(suggestions);
             }
-            result.setDimensionScores(scores);
-        }
 
-        // 解析优点
-        if (root.has("strengths")) {
-            List<String> strengths = new ArrayList<>();
-            root.get("strengths").forEach(node -> strengths.add(node.asText()));
-            result.setStrengths(strengths);
-        }
+            // 解析示范对话
+            if (root.has("exampleDialogue")) {
+                result.setExampleDialogue(root.get("exampleDialogue").asText());
+            } else if (root.has("example")) {
+                // 兼容不同的字段名
+                result.setExampleDialogue(root.get("example").asText());
+            }
 
-        // 解析建议
-        if (root.has("suggestions")) {
-            List<String> suggestions = new ArrayList<>();
-            root.get("suggestions").forEach(node -> suggestions.add(node.asText()));
-            result.setSuggestions(suggestions);
-        }
+            // 解析知识点推荐
+            if (root.has("knowledgeRecommendations")) {
+                List<String> recommendations = new ArrayList<>();
+                JsonNode recNode = root.get("knowledgeRecommendations");
+                if (recNode != null && recNode.isArray()) {
+                    recNode.forEach(node -> {
+                        if (node != null && !node.asText().isEmpty()) {
+                            recommendations.add(node.asText());
+                        }
+                    });
+                }
+                result.setKnowledgeRecommendations(recommendations);
+            } else if (root.has("recommendations")) {
+                // 兼容不同的字段名
+                List<String> recommendations = new ArrayList<>();
+                root.get("recommendations").forEach(node -> {
+                    if (node != null && !node.asText().isEmpty()) {
+                        recommendations.add(node.asText());
+                    }
+                });
+                result.setKnowledgeRecommendations(recommendations);
+            }
 
-        // 解析示范对话
-        if (root.has("exampleDialogue")) {
-            result.setExampleDialogue(root.get("exampleDialogue").asText());
-        }
+            return result;
 
-        // 解析知识点推荐
-        if (root.has("knowledgeRecommendations")) {
-            List<String> recommendations = new ArrayList<>();
-            root.get("knowledgeRecommendations").forEach(node -> recommendations.add(node.asText()));
-            result.setKnowledgeRecommendations(recommendations);
+        } catch (Exception e) {
+            log.error("解析评估结果失败：{}", e.getMessage(), e);
+            // 返回默认评估结果
+            return buildDefaultEvaluationResult();
         }
-
-        return result;
     }
 
     /**

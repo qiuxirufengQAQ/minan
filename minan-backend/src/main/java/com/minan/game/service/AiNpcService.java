@@ -122,41 +122,72 @@ public class AiNpcService {
     }
 
     /**
-     * 调用 AI API
+     * 调用 AI API（带重试机制）
      */
     private String callAiApi(String systemPrompt, String userPrompt) throws Exception {
-        List<Message> messages = new ArrayList<>();
+        int maxRetries = 3;
+        int retryDelay = 1000; // 1 秒
+        int attempt = 0;
+        Exception lastException = null;
 
-        // 添加 System Message
-        messages.add(Message.builder()
-            .role(Role.SYSTEM.getValue())
-            .content(systemPrompt)
-            .build());
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                log.debug("AI API 调用尝试 {}/{}", attempt, maxRetries);
 
-        // 添加 User Message
-        messages.add(Message.builder()
-            .role(Role.USER.getValue())
-            .content(userPrompt)
-            .build());
+                List<Message> messages = new ArrayList<>();
 
-        // 构建请求参数
-        GenerationParam param = GenerationParam.builder()
-            .apiKey(aiConfigService.getApiKey())
-            .model(aiConfigService.getNpcModel())
-            .messages(messages)
-            .maxTokens(aiConfigService.getNpcMaxTokens())
-            .temperature(Float.parseFloat(String.valueOf(aiConfigService.getNpcTemperature())))
-            .resultFormat(GenerationParam.ResultFormat.MESSAGE)
-            .build();
+                // 添加 System Message
+                messages.add(Message.builder()
+                    .role(Role.SYSTEM.getValue())
+                    .content(systemPrompt)
+                    .build());
 
-        // 调用 API
-        GenerationResult result = generation.call(param);
+                // 添加 User Message
+                messages.add(Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(userPrompt)
+                    .build());
 
-        if (result != null && result.getOutput() != null && result.getOutput().getChoices() != null) {
-            return result.getOutput().getChoices().get(0).getMessage().getContent();
-        } else {
-            throw new Exception("AI API 调用失败");
+                // 构建请求参数
+                GenerationParam param = GenerationParam.builder()
+                    .apiKey(aiConfigService.getApiKey())
+                    .model(aiConfigService.getNpcModel())
+                    .messages(messages)
+                    .maxTokens(aiConfigService.getNpcMaxTokens())
+                    .temperature(Float.parseFloat(String.valueOf(aiConfigService.getNpcTemperature())))
+                    .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                    .build();
+
+                // 调用 API
+                GenerationResult result = generation.call(param);
+
+                if (result != null && result.getOutput() != null && result.getOutput().getChoices() != null) {
+                    String content = result.getOutput().getChoices().get(0).getMessage().getContent();
+                    if (attempt > 1) {
+                        log.info("AI API 调用在第 {} 次重试成功", attempt);
+                    }
+                    return content;
+                } else {
+                    throw new Exception("AI API 调用失败：" + (result != null ? result.getRequestId() : "无响应"));
+                }
+
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("AI API 调用失败 (尝试 {}/{}): {}", attempt, maxRetries, e.getMessage());
+                
+                if (attempt < maxRetries) {
+                    try {
+                        Thread.sleep(retryDelay * attempt); // 指数退避
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new Exception("重试被中断", ie);
+                    }
+                }
+            }
         }
+
+        throw new Exception("AI API 调用失败，已重试 " + maxRetries + " 次", lastException);
     }
 
     /**

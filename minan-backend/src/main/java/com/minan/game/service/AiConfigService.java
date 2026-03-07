@@ -40,7 +40,7 @@ public class AiConfigService {
      * 获取 API 密钥
      */
     public String getApiKey() {
-        return getConfigValue("qwen_api_key");
+        return getConfigValue("ai_api_key");
     }
 
     /**

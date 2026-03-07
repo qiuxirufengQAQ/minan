@@ -76,6 +76,11 @@ public class ConversationRecord {
     private String emotionTag;
 
     /**
+     * 是否加密存储 (1=加密，0=未加密)
+     */
+    private Integer isEncrypted;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;

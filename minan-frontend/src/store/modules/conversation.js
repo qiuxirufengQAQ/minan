@@ -146,7 +146,39 @@ export default {
         
       } catch (error) {
         console.error('开始对话失败:', error)
-        return { success: false, message: error.message }
+        
+        // 错误处理和用户提示
+        let errorMessage = '开始对话失败'
+        
+        if (error.response) {
+          // 后端返回错误
+          const status = error.response.status
+          const data = error.response.data
+          
+          if (status === 401) {
+            errorMessage = '请先登录'
+            // 可以跳转到登录页
+            // router.push('/login')
+          } else if (status === 403) {
+            errorMessage = '无权访问此场景'
+          } else if (status === 404) {
+            errorMessage = '场景不存在'
+          } else if (status === 503) {
+            errorMessage = 'AI 服务暂时不可用，请稍后再试'
+          } else if (data && data.message) {
+            errorMessage = data.message
+          }
+        } else if (error.request) {
+          // 网络错误
+          errorMessage = '网络连接失败，请检查网络'
+        }
+        
+        // 使用 message 组件提示用户（需要引入 ant-design-vue 的 message）
+        if (typeof window !== 'undefined' && window.$message) {
+          window.$message.error(errorMessage)
+        }
+        
+        return { success: false, message: errorMessage }
         
       } finally {
         commit('SET_LOADING', false)
@@ -214,7 +246,35 @@ export default {
           }
         }
         
-        return { success: false, message: error.message }
+        // 错误处理和用户提示
+        let errorMessage = '发送消息失败'
+        
+        if (error.response) {
+          const status = error.response.status
+          const data = error.response.data
+          
+          if (status === 401) {
+            errorMessage = '请先登录'
+          } else if (status === 403) {
+            errorMessage = '无权操作此对话'
+          } else if (status === 404) {
+            errorMessage = '对话不存在'
+          } else if (status === 503) {
+            errorMessage = 'AI 服务暂时不可用，请稍后再试'
+          } else if (data && data.message) {
+            errorMessage = data.message
+          }
+        } else if (error.request) {
+          errorMessage = '网络连接失败，请检查网络'
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        if (typeof window !== 'undefined' && window.$message) {
+          window.$message.error(errorMessage)
+        }
+        
+        return { success: false, message: errorMessage }
         
       } finally {
         commit('SET_LOADING', false)
@@ -274,7 +334,32 @@ export default {
         
       } catch (error) {
         console.error('结束对话失败:', error)
-        return { success: false, message: error.message }
+        
+        // 错误处理和用户提示
+        let errorMessage = '结束对话失败'
+        
+        if (error.response) {
+          const status = error.response.status
+          const data = error.response.data
+          
+          if (status === 401) {
+            errorMessage = '请先登录'
+          } else if (status === 403) {
+            errorMessage = '无权评估此对话'
+          } else if (status === 503) {
+            errorMessage = 'AI 评估服务暂时不可用'
+          } else if (data && data.message) {
+            errorMessage = data.message
+          }
+        } else if (error.request) {
+          errorMessage = '网络连接失败，请检查网络'
+        }
+        
+        if (typeof window !== 'undefined' && window.$message) {
+          window.$message.error(errorMessage)
+        }
+        
+        return { success: false, message: errorMessage }
         
       } finally {
         commit('SET_LOADING', false)
