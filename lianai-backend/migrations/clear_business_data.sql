@@ -15,8 +15,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE achievement;
 TRUNCATE TABLE user_achievement;
 
--- AI 配置
-TRUNCATE TABLE ai_config;
+-- AI 配置（保留，包含 API Key 等重要配置）
+-- TRUNCATE TABLE ai_config; -- 已注释，保留此表
 
 -- 对话相关
 TRUNCATE TABLE conversation_record;
