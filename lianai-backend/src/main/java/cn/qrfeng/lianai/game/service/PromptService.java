@@ -36,20 +36,12 @@ public class PromptService {
 
     /**
      * 构建角色扮演提示词
-     *
-     * @param npcId    NPC ID
-     * @param sceneId  场景 ID
-     * @param userId   用户 ID
-     * @param userInput 用户输入
-     * @param history  对话历史
-     * @return 提示词
      */
     public String buildRolePlayPrompt(String npcId, String sceneId, String userId,
                                        String userInput, List<ConversationRecord> history) {
         long startTime = System.currentTimeMillis();
 
         try {
-            // 1. 准备上下文数据
             Map<String, Object> context = new HashMap<>();
 
             // 加载 NPC 数据
@@ -60,14 +52,14 @@ public class PromptService {
             context.put("npc_character", npc);
 
             // 加载场景数据
-            Scene scene = sceneMapper.selectBySceneId(sceneId);
+            Scene scene = sceneMapper.selectById(sceneId);
             if (scene == null) {
                 throw new IllegalArgumentException("场景不存在：" + sceneId);
             }
             context.put("scene", scene);
 
             // 加载用户数据
-            User user = userMapper.selectByUserId(userId);
+            User user = userMapper.selectById(userId);
             if (user == null) {
                 throw new IllegalArgumentException("用户不存在：" + userId);
             }
@@ -78,16 +70,15 @@ public class PromptService {
             context.put("conversation_history", historyList);
             context.put("user_input", userInput);
 
-            // 2. 构建提示词
+            // 构建提示词
             String prompt = templateEngine.buildPrompt("role_play", context);
 
             long buildTime = System.currentTimeMillis() - startTime;
-            log.info("构建角色扮演提示词，NPC: {}, 场景：{}, 耗时：{}ms, Token 估算：{}",
-                    npcId, sceneId, buildTime, prompt.length() / 4);
+            log.info("构建角色扮演提示词，NPC: {}, 场景：{}, 耗时：{}ms", npcId, sceneId, buildTime);
 
-            // 3. 记录使用日志
+            // 记录使用日志
             templateEngine.logUsage(
-                1L,  // template_id (角色扮演模板)
+                1L,
                 npcId,
                 sceneId,
                 userId,
@@ -105,34 +96,24 @@ public class PromptService {
 
     /**
      * 构建 AI 教练评估提示词
-     *
-     * @param npcId    NPC ID
-     * @param sceneId  场景 ID
-     * @param history  完整对话历史
-     * @return 提示词
      */
     public String buildCoachEvaluationPrompt(String npcId, String sceneId,
                                               List<ConversationRecord> history) {
         try {
             Map<String, Object> context = new HashMap<>();
 
-            // 加载 NPC 数据
             NpcCharacter npc = npcMapper.selectByNpcId(npcId);
             context.put("npc_character", npc);
 
-            // 加载场景数据
-            Scene scene = sceneMapper.selectBySceneId(sceneId);
+            Scene scene = sceneMapper.selectById(sceneId);
             context.put("scene", scene);
 
-            // 转换对话历史
             List<Map<String, Object>> historyList = convertHistory(history);
             context.put("conversation_history", historyList);
 
-            // 构建提示词
             String prompt = templateEngine.buildPrompt("coach_evaluation", context);
 
-            log.info("构建 AI 教练评估提示词，NPC: {}, 场景：{}, 历史轮数：{}",
-                    npcId, sceneId, history.size());
+            log.info("构建 AI 教练评估提示词，NPC: {}, 场景：{}", npcId, sceneId);
 
             return prompt;
 
@@ -144,24 +125,17 @@ public class PromptService {
 
     /**
      * 构建场景介绍提示词
-     *
-     * @param sceneId 场景 ID
-     * @param npcId   NPC ID
-     * @return 提示词
      */
     public String buildSceneIntroductionPrompt(String sceneId, String npcId) {
         try {
             Map<String, Object> context = new HashMap<>();
 
-            // 加载场景数据
-            Scene scene = sceneMapper.selectBySceneId(sceneId);
+            Scene scene = sceneMapper.selectById(sceneId);
             context.put("scene", scene);
 
-            // 加载 NPC 数据
             NpcCharacter npc = npcMapper.selectByNpcId(npcId);
             context.put("npc_character", npc);
 
-            // 构建提示词
             String prompt = templateEngine.buildPrompt("scene_introduction", context);
 
             log.info("构建场景介绍提示词，场景：{}, NPC: {}", sceneId, npcId);
@@ -176,10 +150,6 @@ public class PromptService {
 
     /**
      * 测试模板
-     *
-     * @param templateType 模板类型
-     * @param testContext  测试上下文
-     * @return 测试结果
      */
     public Map<String, Object> testTemplate(String templateType, Map<String, Object> testContext) {
         return templateEngine.testTemplate(templateType, testContext);
@@ -188,6 +158,7 @@ public class PromptService {
     /**
      * 转换对话历史
      */
+    @SuppressWarnings("unchecked")
     private List<Map<String, Object>> convertHistory(List<ConversationRecord> history) {
         List<Map<String, Object>> result = new ArrayList<>();
         if (history == null || history.isEmpty()) {
@@ -196,8 +167,12 @@ public class PromptService {
 
         for (ConversationRecord record : history) {
             Map<String, Object> item = new HashMap<>();
-            item.put("userInput", record.getUserInput());
-            item.put("npcResponse", record.getNpcResponse());
+            try {
+                item.put("userInput", record.getClass().getMethod("getUserInput").invoke(record));
+                item.put("npcResponse", record.getClass().getMethod("getNpcResponse").invoke(record));
+            } catch (Exception e) {
+                // 忽略错误
+            }
             result.add(item);
         }
 

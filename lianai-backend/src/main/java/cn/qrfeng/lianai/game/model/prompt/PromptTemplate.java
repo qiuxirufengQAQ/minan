@@ -1,9 +1,12 @@
 package cn.qrfeng.lianai.game.model.prompt;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map;
 
 /**
@@ -38,24 +41,39 @@ public class PromptTemplate {
      * 变量映射配置（JSON）
      */
     @JsonProperty("variable_mapping")
-    private Object variableMapping;
+    private String variableMappingJson;
 
     /**
-     * 获取解析后的变量映射
+     * 获取解析后的变量映射（延迟解析）
      */
     @SuppressWarnings("unchecked")
     public Map<String, VariableMapping> getVariableMappingMap() {
-        if (variableMapping instanceof Map) {
-            Map<?, ?> rawMap = (Map<?, ?>) variableMapping;
+        if (variableMappingJson == null || variableMappingJson.isEmpty()) {
+            return new HashMap<>();
+        }
+        
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> rawMap = mapper.readValue(variableMappingJson, Map.class);
             Map<String, VariableMapping> result = new HashMap<>();
-            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-                if (entry.getValue() instanceof VariableMapping) {
-                    result.put(entry.getKey().toString(), (VariableMapping) entry.getValue());
+            
+            for (Map.Entry<String, Object> entry : rawMap.entrySet()) {
+                if (entry.getValue() instanceof Map) {
+                    Map<?, ?> rawConfig = (Map<?, ?>) entry.getValue();
+                    VariableMapping config = new VariableMapping();
+                    config.setSource(rawConfig.get("source") != null ? rawConfig.get("source").toString() : null);
+                    config.setField(rawConfig.get("field") != null ? rawConfig.get("field").toString() : null);
+                    config.setRequired(rawConfig.get("required") instanceof Boolean ? (Boolean) rawConfig.get("required") : null);
+                    config.setDefaultValue(rawConfig.get("default"));
+                    config.setMaxRounds(rawConfig.get("max_rounds") instanceof Number ? ((Number) rawConfig.get("max_rounds")).intValue() : null);
+                    config.setTransform(rawConfig.get("transform") != null ? rawConfig.get("transform").toString() : null);
+                    result.put(entry.getKey().toString(), config);
                 }
             }
             return result;
+        } catch (Exception e) {
+            return new HashMap<>();
         }
-        return new HashMap<>();
     }
 
     /**
