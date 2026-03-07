@@ -90,8 +90,8 @@ if ps aux | grep "game-1.0.0.jar" | grep -v grep > /dev/null; then
   echo "⚠️  服务已在运行 (PID: $PID)"
   
   # 检查是否是自己启动的
-  if [ -f /var/www/minan/.service_owner ]; then
-    OWNER=$(cat /var/www/minan/.service_owner)
+  if [ -f /var/www/lianai/.service_owner ]; then
+    OWNER=$(cat /var/www/lianai/.service_owner)
     if [ "$OWNER" != "$(whoami)" ]; then
       echo "❌ 服务由 $OWNER 启动，请勿操作"
       exit 1
@@ -100,18 +100,18 @@ if ps aux | grep "game-1.0.0.jar" | grep -v grep > /dev/null; then
 fi
 
 # 获取服务所有权
-echo "$(whoami) $(date +%s)" > /var/www/minan/.service_owner
+echo "$(whoami) $(date +%s)" > /var/www/lianai/.service_owner
 
 # 启动服务...
 
 # 释放所有权（可选，服务持续运行时保留）
-# rm /var/www/minan/.service_owner
+# rm /var/www/lianai/.service_owner
 ```
 
 **方案 B: Systemd 服务（最规范）**
 ```bash
 # 创建 systemd 服务（一次性设置）
-sudo tee /etc/systemd/system/minan-game.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/lianai-game.service > /dev/null <<EOF
 [Unit]
 Description=Minan Game Backend
 After=network.target
@@ -119,10 +119,10 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/minan
+WorkingDirectory=/var/www/lianai
 ExecStart=/usr/bin/java -jar game-1.0.0.jar --server.port=8080
 Restart=on-failure
-PIDFile=/var/www/minan/app.pid
+PIDFile=/var/www/lianai/app.pid
 
 [Install]
 WantedBy=multi-user.target
@@ -132,13 +132,13 @@ EOF
 sudo systemctl daemon-reload
 
 # AI 操作统一使用 systemctl
-sudo systemctl start minan-game
-sudo systemctl stop minan-game
-sudo systemctl restart minan-game
-sudo systemctl status minan-game
+sudo systemctl start lianai-game
+sudo systemctl stop lianai-game
+sudo systemctl restart lianai-game
+sudo systemctl status lianai-game
 
 # 检查锁
-sudo systemctl is-active minan-game
+sudo systemctl is-active lianai-game
 ```
 
 **方案 C: 端口锁文件**
@@ -202,7 +202,7 @@ echo "$(whoami)@$(hostname) $(date +%s)" > "$LOCK_FILE"
 echo "✅ 获取数据库锁"
 
 # 执行迁移
-mysql -u root -proot minan_game < "$1"
+mysql -u root -proot lianai_game < "$1"
 RESULT=$?
 
 # 释放锁
@@ -218,22 +218,22 @@ exit $RESULT
 1. **一次性设置**（首次部署时）：
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable minan-game
+sudo systemctl enable lianai-game
 ```
 
 2. **AI 统一操作**：
 ```bash
 # 启动
-sudo systemctl start minan-game
+sudo systemctl start lianai-game
 
 # 重启
-sudo systemctl restart minan-game
+sudo systemctl restart lianai-game
 
 # 停止
-sudo systemctl stop minan-game
+sudo systemctl stop lianai-game
 
 # 状态检查
-sudo systemctl is-active minan-game
+sudo systemctl is-active lianai-game
 ```
 
 3. **优势**：
@@ -257,21 +257,21 @@ if [ -f /tmp/minan_db.lock ]; then
 fi
 
 # 2. 检查服务状态
-systemctl is-active minan-game
+systemctl is-active lianai-game
 
 # 3. 备份数据（可选）
-mysqldump -u root -proot minan_game > backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u root -proot lianai_game > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
 #### 服务重启
 ```bash
 # 1. 检查是否已运行
-if systemctl is-active minan-game > /dev/null; then
+if systemctl is-active lianai-game > /dev/null; then
   echo "ℹ️  服务已运行，执行重启"
-  sudo systemctl restart minan-game
+  sudo systemctl restart lianai-game
 else
   echo "ℹ️  服务未运行，执行启动"
-  sudo systemctl start minan-game
+  sudo systemctl start lianai-game
 fi
 
 # 2. 验证启动
@@ -304,11 +304,11 @@ curl -X POST "webhook_url" \
 | 操作类型 | 锁定机制 | 命令 |
 |---------|---------|------|
 | 数据库迁移 | 文件锁 `/tmp/minan_db.lock` | `./scripts/execute_db_migration.sh xxx.sql` |
-| 启动服务 | Systemd | `sudo systemctl start minan-game` |
-| 重启服务 | Systemd | `sudo systemctl restart minan-game` |
-| 停止服务 | Systemd | `sudo systemctl stop minan-game` |
-| 检查状态 | Systemd | `sudo systemctl status minan-game` |
-| 查看日志 | Journalctl | `journalctl -u minan-game -f` |
+| 启动服务 | Systemd | `sudo systemctl start lianai-game` |
+| 重启服务 | Systemd | `sudo systemctl restart lianai-game` |
+| 停止服务 | Systemd | `sudo systemctl stop lianai-game` |
+| 检查状态 | Systemd | `sudo systemctl status lianai-game` |
+| 查看日志 | Journalctl | `journalctl -u lianai-game -f` |
 
 ---
 
@@ -332,13 +332,13 @@ fi
 ### 服务僵死
 ```bash
 # 强制停止
-sudo systemctl kill minan-game
+sudo systemctl kill lianai-game
 
 # 清理端口
 kill -9 $(lsof -t -i:8080)
 
 # 重启
-sudo systemctl start minan-game
+sudo systemctl start lianai-game
 ```
 
 ---

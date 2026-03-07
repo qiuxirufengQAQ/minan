@@ -13,11 +13,11 @@
 你是 Minan 项目的协作开发者。这是一个教育游戏项目，支持多 AI 并行开发。
 
 ### 你的环境
-- **数据库**: `minan_game2` (你的独立数据库)
+- **数据库**: `lianai_game2` (你的独立数据库)
 - **后端端口**: `8082`
 - **前端端口**: `3002`
-- **部署目录**: `/var/www/minan2/`
-- **Systemd 服务**: `minan-game2`
+- **部署目录**: `/var/www/lianai2/`
+- **Systemd 服务**: `lianai-game2`
 
 ### 环境隔离
 每个 AI 有完全独立的环境：
@@ -85,7 +85,7 @@ curl -X GET "http://localhost:8082/api/users/getDetail?userId=USER_COPAW_001" \
 
 2. **查看日志**
    ```bash
-   journalctl -u minan-game2 -n 50 --no-pager
+   journalctl -u lianai-game2 -n 50 --no-pager
    ```
 
 3. **定位代码**
@@ -104,8 +104,8 @@ curl -X GET "http://localhost:8082/api/users/getDetail?userId=USER_COPAW_001" \
    mvn clean package -DskipTests -q
    
    # 部署
-   cp target/game-1.0.0.jar /var/www/minan2/
-   systemctl restart minan-game2
+   cp target/game-1.0.0.jar /var/www/lianai2/
+   systemctl restart lianai-game2
    
    # 测试修复
    sleep 5 && curl [测试接口]
@@ -388,15 +388,15 @@ curl -I [接口]
 
 ```bash
 # 实时查看日志
-journalctl -u minan-game2 -f
+journalctl -u lianai-game2 -f
 
 # 查看最近 100 行
-journalctl -u minan-game2 -n 100 --no-pager
+journalctl -u lianai-game2 -n 100 --no-pager
 
 # 查找特定错误
-journalctl -u minan-game2 | grep -i "error"
-journalctl -u minan-game2 | grep "Unknown column"  # 数据库字段错误
-journalctl -u minan-game2 | grep "NullPointerException"  # 空指针
+journalctl -u lianai-game2 | grep -i "error"
+journalctl -u lianai-game2 | grep "Unknown column"  # 数据库字段错误
+journalctl -u lianai-game2 | grep "NullPointerException"  # 空指针
 ```
 
 ---
@@ -444,7 +444,7 @@ journalctl -u minan-game2 | grep "NullPointerException"  # 空指针
 **解决**:
 ```bash
 # 查看日志
-journalctl -u minan-game2 -n 100 --no-pager | grep -A 5 "ERROR"
+journalctl -u lianai-game2 -n 100 --no-pager | grep -A 5 "ERROR"
 
 # 常见原因：
 # - 空指针异常（检查 null）
@@ -491,7 +491,7 @@ TOKEN=$(curl -s -X POST [登录接口] -d '[登录数据]' | grep -o '"token":"[
 
 ### 4. 保持环境隔离
 - 使用自己的端口（8082）
-- 使用自己的数据库（minan_game2）
+- 使用自己的数据库（lianai_game2）
 - 不要修改另一个 AI 的环境
 
 ### 5. 从源代码获取真相 ⭐ 新方法论
@@ -537,7 +537,7 @@ TOKEN=$(curl -s -X POST [登录接口] -d '[登录数据]' | grep -o '"token":"[
 ## 📞 需要帮助？
 
 1. **查看文档**: 先阅读 `docs/` 下的文档
-2. **查看日志**: `journalctl -u minan-game2`
+2. **查看日志**: `journalctl -u lianai-game2`
 3. **运行测试**: `./test_api_complete.sh`
 4. **询问小爪**: 另一个 AI 助手
 
@@ -596,13 +596,13 @@ java.sql.SQLSyntaxErrorException: Unknown column 'conversation_rounds' in 'field
 
 **修复 SQL**:
 ```sql
--- 在 minan_game1 和 minan_game2 数据库中都要执行
-USE minan_game1;
+-- 在 lianai_game1 和 lianai_game2 数据库中都要执行
+USE lianai_game1;
 ALTER TABLE evaluation ADD COLUMN conversation_id VARCHAR(100) DEFAULT NULL COMMENT '对话 ID' AFTER attempt_number;
 ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对话轮数' AFTER conversation_id;
 
--- 如果你的 AI 环境是 minan_game2，也要执行：
-USE minan_game2;
+-- 如果你的 AI 环境是 lianai_game2，也要执行：
+USE lianai_game2;
 ALTER TABLE evaluation ADD COLUMN conversation_id VARCHAR(100) DEFAULT NULL COMMENT '对话 ID' AFTER attempt_number;
 ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对话轮数' AFTER conversation_id;
 ```
@@ -610,7 +610,7 @@ ALTER TABLE evaluation ADD COLUMN conversation_rounds INT DEFAULT 0 COMMENT '对
 **验证方法**:
 ```bash
 # 检查字段是否添加成功
-mysql -u root -proot minan_game1 -e "DESC evaluation;" | grep conversation
+mysql -u root -proot lianai_game1 -e "DESC evaluation;" | grep conversation
 
 # 应该看到：
 # conversation_id      | varchar(100) | YES  | NULL | NULL    |
@@ -625,8 +625,8 @@ mysql -u root -proot minan_game1 -e "DESC evaluation;" | grep conversation
 **检查清单**（添加新字段时）:
 - [ ] 修改 Model 类
 - [ ] 生成 SQL 脚本
-- [ ] 在 minan_game1 执行
-- [ ] 在 minan_game2 执行
+- [ ] 在 lianai_game1 执行
+- [ ] 在 lianai_game2 执行
 - [ ] 验证字段已添加
 - [ ] 测试接口是否正常
 
@@ -742,12 +742,12 @@ grep -r "@RequestMapping" src/main/java/com/minan/game/controller/ | grep "/api/
 
 ### 完整修改清单（供另一个 AI 参考）
 
-如果你要在新环境（如 minan_game2）部署，需要执行以下操作：
+如果你要在新环境（如 lianai_game2）部署，需要执行以下操作：
 
 #### 1. 数据库修改
 ```sql
 -- 切换到你的数据库
-USE minan_game2;
+USE lianai_game2;
 
 -- 添加 evaluation 表缺失字段
 ALTER TABLE evaluation ADD COLUMN conversation_id VARCHAR(100) DEFAULT NULL COMMENT '对话 ID' AFTER attempt_number;
@@ -790,8 +790,8 @@ cd /root/.copaw/data/minan/minan-backend
 mvn clean package -DskipTests -q
 
 # 2. 部署
-cp target/game-1.0.0.jar /var/www/minan2/
-systemctl restart minan-game2
+cp target/game-1.0.0.jar /var/www/lianai2/
+systemctl restart lianai-game2
 
 # 3. 等待启动
 sleep 5
@@ -837,13 +837,13 @@ curl "http://localhost:8082/api/statistics/get" \
 
 **坑 5**: 配置修改后未重启
 - **症状**: 修改了配置但不生效
-- **解决**: `systemctl restart minan-gameX`
+- **解决**: `systemctl restart lianai-gameX`
 - **预防**: 修改配置后养成重启习惯
 
 ---
 
 **最后提醒**: 
-- 💾 **所有数据库修改都要在 minan_game1 和 minan_game2 同时执行**
+- 💾 **所有数据库修改都要在 lianai_game1 和 lianai_game2 同时执行**
 - 📝 **每次修改都要记录在案，方便追踪**
 - ✅ **修改后要完整测试相关接口**
 - 🔄 **定期同步两个环境的配置和数据**

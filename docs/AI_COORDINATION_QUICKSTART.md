@@ -14,7 +14,7 @@
 ./scripts/execute_db_migration.sh migrations/20260306_xxx.sql
 
 # ❌ 错误：直接执行 MySQL
-mysql -u root -proot minan_game < migrations/xxx.sql
+mysql -u root -proot lianai_game < migrations/xxx.sql
 ```
 
 **锁机制**:
@@ -61,7 +61,7 @@ java -jar game-1.0.0.jar &
 cd minan-backend && mvn clean package -DskipTests
 
 # 2. 复制 jar
-cp target/game-1.0.0.jar /var/www/minan/
+cp target/game-1.0.0.jar /var/www/lianai/
 
 # 3. 重启服务（统一入口）
 sudo ./scripts/manage_service.sh restart
@@ -80,8 +80,8 @@ sudo ./scripts/manage_service.sh status
 sudo ./scripts/manage_service.sh logs
 
 # 或者直接使用 systemctl
-sudo systemctl status minan-game
-journalctl -u minan-game -f
+sudo systemctl status lianai-game
+journalctl -u lianai-game -f
 ```
 
 ---
@@ -114,7 +114,7 @@ rm /tmp/minan_db.lock
 netstat -tlnp | grep :8080
 
 # 2. 查看服务状态
-sudo systemctl status minan-game
+sudo systemctl status lianai-game
 
 # 3. 统一重启
 sudo ./scripts/manage_service.sh restart

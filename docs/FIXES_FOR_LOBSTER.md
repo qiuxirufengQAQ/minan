@@ -150,10 +150,10 @@ curl -H "Authorization: Bearer <token>" ...
 
 ### 需要执行的 SQL
 
-**在龙虾的数据库（minan_game2）中执行**:
+**在龙虾的数据库（lianai_game2）中执行**:
 
 ```sql
-USE minan_game2;
+USE lianai_game2;
 
 -- 添加缺失字段
 ALTER TABLE evaluation ADD COLUMN ai_feedback_json JSON DEFAULT NULL COMMENT 'AI 反馈 JSON' AFTER conversation_rounds;
@@ -174,7 +174,7 @@ DESC evaluation;
 如果龙虾环境的测试数据不完整，可以执行以下 SQL：
 
 ```sql
-USE minan_game2;
+USE lianai_game2;
 
 -- 每日任务数据
 INSERT INTO daily_task (task_id, task_type, task_name, task_description, target_count, cp_reward, icon_url, is_active) VALUES
@@ -223,8 +223,8 @@ INSERT INTO scene_hint (scene_id, hint_text, hint_type) VALUES
 ```bash
 cd /root/.copaw/data/minan/minan-backend
 mvn clean package -DskipTests -q
-cp target/game-1.0.0.jar /var/www/minan2/
-systemctl restart minan-game2
+cp target/game-1.0.0.jar /var/www/lianai2/
+systemctl restart lianai-game2
 sleep 5
 ```
 
