@@ -1,15 +1,13 @@
 package cn.qrfeng.lianai.game.engine;
 
-import cn.qrfeng.lianai.game.entity.NpcCharacter;
-import cn.qrfeng.lianai.game.entity.Scene;
-import cn.qrfeng.lianai.game.entity.User;
+import cn.qrfeng.lianai.game.model.NpcCharacter;
+import cn.qrfeng.lianai.game.model.Scene;
+import cn.qrfeng.lianai.game.model.User;
 import cn.qrfeng.lianai.game.mapper.prompt.PromptTemplateMapper;
 import cn.qrfeng.lianai.game.mapper.prompt.PromptTemplateUsageMapper;
 import cn.qrfeng.lianai.game.model.prompt.PromptTemplate;
 import cn.qrfeng.lianai.game.model.prompt.TemplateUsageLog;
 import cn.qrfeng.lianai.game.model.prompt.VariableMapping;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,41 +32,28 @@ public class PromptTemplateEngine {
     @Autowired
     private PromptTemplateUsageMapper usageMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     // 模板缓存：key = templateType:version
     private final Map<String, CachedTemplate> templateCache = new ConcurrentHashMap<>();
     private final long cacheTtlMs = 300_000; // 5 分钟
 
-    // 条件渲染正则：{#if var}...{/if} 和 {#if var}...{#else}...{/if}
+    // 条件渲染正则
     private static final Pattern CONDITIONAL_PATTERN = 
         Pattern.compile("\\{#if\\s+(\\w+)}(.*?)(?:\\{#else}(.*?))?\\{/if}", Pattern.DOTALL);
 
     /**
      * 构建提示词
-     *
-     * @param templateType 模板类型
-     * @param context      上下文数据
-     * @return 构建好的提示词
      */
     public String buildPrompt(String templateType, Map<String, Object> context) {
         long startTime = System.currentTimeMillis();
 
         try {
-            // 1. 获取模板
             PromptTemplate template = getTemplate(templateType, null);
             if (template == null) {
                 throw new IllegalArgumentException("模板不存在：" + templateType);
             }
 
-            // 2. 处理条件渲染
             String content = processConditionals(template.getContent(), context);
-
-            // 3. 解析变量
             Map<String, Object> variables = parseVariables(template, context);
-
-            // 4. 渲染模板
             String prompt = renderTemplate(content, variables);
 
             long buildTime = System.currentTimeMillis() - startTime;
@@ -89,14 +74,12 @@ public class PromptTemplateEngine {
     public PromptTemplate getTemplate(String templateType, Integer version) {
         String cacheKey = templateType + ":" + (version != null ? version : "latest");
 
-        // 检查缓存
         CachedTemplate cached = templateCache.get(cacheKey);
         if (cached != null && System.currentTimeMillis() - cached.timestamp < cacheTtlMs) {
             log.debug("命中模板缓存：{}", cacheKey);
             return cached.template;
         }
 
-        // 从数据库获取
         PromptTemplate template;
         if (version != null) {
             template = templateMapper.selectByTypeAndVersion(templateType, version);
@@ -124,7 +107,7 @@ public class PromptTemplateEngine {
             String ifContent = matcher.group(2);
             String elseContent = matcher.group(3);
 
-            Object value = getVariableValue(varName, context);
+            Object value = getVariableFromContext(varName, context);
             boolean isTrue = value != null && !value.toString().isEmpty();
 
             String replacement = isTrue ? ifContent : (elseContent != null ? elseContent : "");
@@ -136,37 +119,82 @@ public class PromptTemplateEngine {
     }
 
     /**
+     * 从上下文获取变量
+     */
+    private Object getVariableFromContext(String varName, Map<String, Object> context) {
+        if (context.containsKey(varName)) {
+            return context.get(varName);
+        }
+        for (Object data : context.values()) {
+            if (data instanceof Map) {
+                Object value = ((Map<?, ?>) data).get(varName);
+                if (value != null) return value;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 解析变量
      */
+    @SuppressWarnings("unchecked")
+    private Map<String, VariableMapping> parseVariableMapping(PromptTemplate template) throws Exception {
+        Object mappingObj = template.getVariableMapping();
+        if (mappingObj instanceof Map) {
+            Map<String, VariableMapping> result = new HashMap<>();
+            Map<?, ?> rawMap = (Map<?, ?>) mappingObj;
+            
+            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                String key = entry.getKey().toString();
+                Object value = entry.getValue();
+                
+                if (value instanceof VariableMapping) {
+                    result.put(key, (VariableMapping) value);
+                } else if (value instanceof Map) {
+                    // 从 Map 转换为 VariableMapping
+                    Map<?, ?> rawConfig = (Map<?, ?>) value;
+                    VariableMapping config = new VariableMapping();
+                    config.setSource(rawConfig.get("source") != null ? rawConfig.get("source").toString() : null);
+                    config.setField(rawConfig.get("field") != null ? rawConfig.get("field").toString() : null);
+                    config.setRequired(rawConfig.get("required") instanceof Boolean ? (Boolean) rawConfig.get("required") : null);
+                    config.setDefaultValue(rawConfig.get("default"));
+                    config.setMaxRounds(rawConfig.get("max_rounds") instanceof Number ? ((Number) rawConfig.get("max_rounds")).intValue() : null);
+                    config.setTransform(rawConfig.get("transform") != null ? rawConfig.get("transform").toString() : null);
+                    config.setComputeExpression(rawConfig.get("compute") != null ? rawConfig.get("compute").toString() : null);
+                    result.put(key, config);
+                }
+            }
+            return result;
+        }
+        throw new Exception("变量映射格式错误");
+    }
+
     private Map<String, Object> parseVariables(PromptTemplate template, Map<String, Object> context) 
             throws Exception {
         Map<String, Object> variables = new HashMap<>();
-        Map<String, VariableMapping> mapping = template.getVariableMapping();
+        Map<String, VariableMapping> mapping = parseVariableMapping(template);
 
         for (Map.Entry<String, VariableMapping> entry : mapping.entrySet()) {
             String varName = entry.getKey();
-            VariableMapping mappingConfig = entry.getValue();
+            VariableMapping config = entry.getValue();
 
             try {
-                Object value = fetchVariableValue(mappingConfig, context);
+                Object value = fetchVariableValue(config, context);
                 
-                // 特殊处理：对话历史
                 if ("conversation_history".equals(varName)) {
-                    value = formatConversationHistory(context, mappingConfig.getMaxRounds());
+                    value = formatConversationHistory(context, config.getMaxRounds());
                 }
 
-                // 变量转换
-                value = transformVariable(value, mappingConfig);
-
+                value = transformVariable(value, config);
                 variables.put(varName, value);
 
             } catch (Exception e) {
-                if (mappingConfig.isRequired()) {
+                if (config.getRequired() != null && config.getRequired()) {
                     log.error("必填变量 [{}] 获取失败：{}", varName, e.getMessage());
                     throw e;
                 } else {
                     log.warn("可选变量 [{}] 获取失败，使用默认值", varName);
-                    variables.put(varName, mappingConfig.getDefaultValue());
+                    variables.put(varName, config.getDefaultValue());
                 }
             }
         }
@@ -197,16 +225,13 @@ public class PromptTemplateEngine {
                 User user = (User) context.get("user");
                 return user != null ? getFieldValue(user, field) : null;
 
-            case "computed":
-                return computeVariable(mapping, context);
-
             default:
                 return mapping.getDefaultValue();
         }
     }
 
     /**
-     * 获取对象字段值（反射）
+     * 获取对象字段值
      */
     private Object getFieldValue(Object obj, String fieldName) {
         try {
@@ -220,39 +245,26 @@ public class PromptTemplateEngine {
     }
 
     /**
-     * 计算变量
+     * 格式化对话历史
      */
-    private Object computeVariable(VariableMapping mapping, Map<String, Object> context) {
-        String computeExpr = mapping.getComputeExpression();
-        if (computeExpr == null || computeExpr.isEmpty()) {
-            return mapping.getDefaultValue();
+    private String formatConversationHistory(Map<String, Object> context, Integer maxRounds) {
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> history = (List<Map<String, Object>>) context.get("conversation_history");
+        
+        if (history == null || history.isEmpty()) {
+            return "";
         }
 
-        // 简单的表达式计算（支持三元运算符）
-        if (computeExpr.contains("?")) {
-            return evaluateTernaryExpression(computeExpr, context);
+        int limit = (maxRounds != null && history.size() > maxRounds) ? maxRounds : history.size();
+        List<Map<String, Object>> recent = history.subList(history.size() - limit, history.size());
+
+        StringBuilder sb = new StringBuilder();
+        for (Map<String, Object> item : recent) {
+            sb.append("用户：").append(item.get("userInput")).append("\n");
+            sb.append("NPC: ").append(item.get("npcResponse")).append("\n");
         }
 
-        return mapping.getDefaultValue();
-    }
-
-    /**
-     * 计算三元表达式
-     */
-    private Object evaluateTernaryExpression(String expr, Map<String, Object> context) {
-        // 简化实现：gender == 'male' ? '他' : '她'
-        try {
-            if (expr.contains("gender")) {
-                NpcCharacter npc = (NpcCharacter) context.get("npc_character");
-                if (npc != null && "male".equals(npc.getGender())) {
-                    return expr.contains("'他'") || expr.contains("\"他\"") ? "他" : "他";
-                }
-                return expr.contains("'她'") || expr.contains("\"她\"") ? "她" : "她";
-            }
-        } catch (Exception e) {
-            log.warn("表达式计算失败：{}", expr);
-        }
-        return null;
+        return sb.toString().trim();
     }
 
     /**
@@ -279,10 +291,13 @@ public class PromptTemplateEngine {
                 }
 
             case "map":
-                Map<String, String> mapConfig = mapping.getTransformConfig();
+                @SuppressWarnings("unchecked")
+                Map<String, String> mapConfig = (Map<String, String>) mapping.getTransformConfig();
                 if (mapConfig != null) {
-                    return mapConfig.getOrDefault(value != null ? value.toString() : "", 
-                                                 value != null ? value.toString() : mapping.getDefaultValue());
+                    String valueStr = value != null ? value.toString() : "";
+                    String defaultStr = mapping.getDefaultValue() != null ? 
+                                       mapping.getDefaultValue().toString() : valueStr;
+                    return mapConfig.getOrDefault(valueStr, defaultStr);
                 }
                 return value;
 
@@ -292,42 +307,15 @@ public class PromptTemplateEngine {
     }
 
     /**
-     * 格式化对话历史
-     */
-    private String formatConversationHistory(Map<String, Object> context, int maxRounds) {
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> history = (List<Map<String, Object>>) context.get("conversation_history");
-        
-        if (history == null || history.isEmpty()) {
-            return "";
-        }
-
-        List<Map<String, Object>> recent = history;
-        if (history.size() > maxRounds) {
-            recent = history.subList(history.size() - maxRounds, history.size());
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (Map<String, Object> item : recent) {
-            sb.append("用户：").append(item.get("userInput")).append("\n");
-            sb.append("NPC: ").append(item.get("npcResponse")).append("\n");
-        }
-
-        return sb.toString().trim();
-    }
-
-    /**
      * 渲染模板
      */
     private String renderTemplate(String content, Map<String, Object> variables) {
         String result = content;
-
         for (Map.Entry<String, Object> entry : variables.entrySet()) {
             String placeholder = "{" + entry.getKey() + "}";
             String value = entry.getValue() != null ? entry.getValue().toString() : "";
             result = result.replace(placeholder, value);
         }
-
         return result;
     }
 

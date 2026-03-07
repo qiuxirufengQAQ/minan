@@ -4,6 +4,8 @@ import cn.qrfeng.lianai.game.model.prompt.PromptTemplate;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 提示词模板 Mapper
  */
