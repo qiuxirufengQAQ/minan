@@ -38,7 +38,25 @@ public class PromptTemplate {
      * 变量映射配置（JSON）
      */
     @JsonProperty("variable_mapping")
-    private Map<String, VariableMapping> variableMapping;
+    private Object variableMapping;
+
+    /**
+     * 获取解析后的变量映射
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, VariableMapping> getVariableMappingMap() {
+        if (variableMapping instanceof Map) {
+            Map<?, ?> rawMap = (Map<?, ?>) variableMapping;
+            Map<String, VariableMapping> result = new HashMap<>();
+            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                if (entry.getValue() instanceof VariableMapping) {
+                    result.put(entry.getKey().toString(), (VariableMapping) entry.getValue());
+                }
+            }
+            return result;
+        }
+        return new HashMap<>();
+    }
 
     /**
      * 版本号

@@ -23,6 +23,26 @@
         )
     </insert>
 
+    <insert id="insertRaw" parameterType="java.util.Map">
+        INSERT INTO prompt_template_usage (
+            template_id,
+            npc_id,
+            scene_id,
+            user_id,
+            tokens_used,
+            response_time_ms,
+            created_at
+        ) VALUES (
+            #{template_id},
+            #{npc_id},
+            #{scene_id},
+            #{user_id},
+            #{tokens_used},
+            #{response_time_ms},
+            #{created_at}
+        )
+    </insert>
+
     <select id="selectUsageStats" resultType="java.util.HashMap">
         SELECT 
             COUNT(*) as total_calls,

@@ -122,6 +122,62 @@ public class AiNpcService {
     }
 
     /**
+     * 生成 NPC 回复（供 ConversationService 使用）
+     */
+    public String generateResponse(String prompt) throws Exception {
+        // 直接使用完整提示词调用 AI
+        return callAiApiWithSinglePrompt(prompt);
+    }
+
+    /**
+     * 调用 AI API（单个提示词）
+     */
+    private String callAiApiWithSinglePrompt(String prompt) throws Exception {
+        int maxRetries = 3;
+        int retryDelay = 1000;
+        int attempt = 0;
+        Exception lastException = null;
+
+        while (attempt < maxRetries) {
+            try {
+                attempt++;
+                log.debug("AI API 调用尝试 {}/{}", attempt, maxRetries);
+
+                List<Message> messages = new ArrayList<>();
+                messages.add(Message.builder()
+                    .role(Role.USER.getValue())
+                    .content(prompt)
+                    .build());
+
+                GenerationParam param = GenerationParam.builder()
+                    .apiKey(aiConfigService.getApiKey())
+                    .model(aiConfigService.getNpcModel())
+                    .messages(messages)
+                    .maxTokens(aiConfigService.getNpcMaxTokens())
+                    .temperature(Float.parseFloat(String.valueOf(aiConfigService.getNpcTemperature())))
+                    .resultFormat(GenerationParam.ResultFormat.MESSAGE)
+                    .build();
+
+                GenerationResult result = Generation.call(param);
+                if (result.getStatusCode() == 200 && result.getOutput() != null) {
+                    return result.getOutput().getChoices().get(0).getMessage().getContent();
+                } else {
+                    throw new Exception("AI API 调用失败：" + result.getMessage());
+                }
+
+            } catch (Exception e) {
+                lastException = e;
+                log.warn("AI API 调用失败 (尝试 {}/{})：{}", attempt, maxRetries, e.getMessage());
+                if (attempt < maxRetries) {
+                    Thread.sleep(retryDelay * attempt);
+                }
+            }
+        }
+
+        throw new Exception("AI API 调用失败（已重试" + maxRetries + "次）：" + lastException.getMessage(), lastException);
+    }
+
+    /**
      * 调用 AI API（带重试机制）
      */
     private String callAiApi(String systemPrompt, String userPrompt) throws Exception {

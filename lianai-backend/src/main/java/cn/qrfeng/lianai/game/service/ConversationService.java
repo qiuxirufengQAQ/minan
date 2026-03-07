@@ -45,6 +45,9 @@ public class ConversationService {
     @Autowired
     private AesEncryptor aesEncryptor;
 
+    @Autowired
+    private PromptService promptService;
+
     // 内存中的对话上下文（生产环境建议用 Redis）
     private final Map<String, ConversationContext> conversationContexts = new HashMap<>();
 
@@ -143,8 +146,28 @@ public class ConversationService {
             context.setCurrentRound(context.getCurrentRound() + 1);
             int currentRound = context.getCurrentRound();
 
-            // 调用 AI NPC 服务生成回复（临时实现）
-            String npcResponse = "这是 AI NPC 的回复（第" + currentRound + "轮）";
+            // 获取对话历史
+            List<ConversationRecord> history = getConversationHistory(conversationId);
+
+            // 调用 AI NPC 服务生成回复
+            String npcResponse;
+            try {
+                // 构建提示词
+                String prompt = promptService.buildRolePlayPrompt(
+                    context.getNpcId(),
+                    context.getSceneId(),
+                    context.getUserId().toString(),
+                    userInput,
+                    history
+                );
+
+                // 调用 AI API
+                npcResponse = aiNpcService.generateResponse(prompt);
+
+            } catch (Exception e) {
+                log.error("生成 AI 回复失败：{}", e.getMessage());
+                npcResponse = "抱歉，我刚才走神了，能再说一遍吗？";
+            }
 
             // 保存对话记录
             ConversationRecord record = new ConversationRecord();

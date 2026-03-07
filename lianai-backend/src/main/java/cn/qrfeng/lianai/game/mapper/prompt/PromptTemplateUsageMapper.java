@@ -20,6 +20,11 @@ public interface PromptTemplateUsageMapper {
     int insert(TemplateUsageLog log);
 
     /**
+     * 插入使用日志（Map 方式）
+     */
+    int insertRaw(Map<String, Object> log);
+
+    /**
      * 查询使用统计
      */
     Map<String, Object> selectUsageStats(

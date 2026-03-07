@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 提示词模板引擎
@@ -137,42 +138,10 @@ public class PromptTemplateEngine {
     /**
      * 解析变量
      */
-    @SuppressWarnings("unchecked")
-    private Map<String, VariableMapping> parseVariableMapping(PromptTemplate template) throws Exception {
-        Object mappingObj = template.getVariableMapping();
-        if (mappingObj instanceof Map) {
-            Map<String, VariableMapping> result = new HashMap<>();
-            Map<?, ?> rawMap = (Map<?, ?>) mappingObj;
-            
-            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
-                String key = entry.getKey().toString();
-                Object value = entry.getValue();
-                
-                if (value instanceof VariableMapping) {
-                    result.put(key, (VariableMapping) value);
-                } else if (value instanceof Map) {
-                    // 从 Map 转换为 VariableMapping
-                    Map<?, ?> rawConfig = (Map<?, ?>) value;
-                    VariableMapping config = new VariableMapping();
-                    config.setSource(rawConfig.get("source") != null ? rawConfig.get("source").toString() : null);
-                    config.setField(rawConfig.get("field") != null ? rawConfig.get("field").toString() : null);
-                    config.setRequired(rawConfig.get("required") instanceof Boolean ? (Boolean) rawConfig.get("required") : null);
-                    config.setDefaultValue(rawConfig.get("default"));
-                    config.setMaxRounds(rawConfig.get("max_rounds") instanceof Number ? ((Number) rawConfig.get("max_rounds")).intValue() : null);
-                    config.setTransform(rawConfig.get("transform") != null ? rawConfig.get("transform").toString() : null);
-                    config.setComputeExpression(rawConfig.get("compute") != null ? rawConfig.get("compute").toString() : null);
-                    result.put(key, config);
-                }
-            }
-            return result;
-        }
-        throw new Exception("变量映射格式错误");
-    }
-
     private Map<String, Object> parseVariables(PromptTemplate template, Map<String, Object> context) 
             throws Exception {
         Map<String, Object> variables = new HashMap<>();
-        Map<String, VariableMapping> mapping = parseVariableMapping(template);
+        Map<String, VariableMapping> mapping = template.getVariableMappingMap();
 
         for (Map.Entry<String, VariableMapping> entry : mapping.entrySet()) {
             String varName = entry.getKey();
@@ -322,19 +291,20 @@ public class PromptTemplateEngine {
     /**
      * 记录使用日志
      */
+    @SuppressWarnings("unchecked")
     public void logUsage(Long templateId, String npcId, String sceneId, String userId, 
                         int tokensUsed, int responseTimeMs) {
         try {
-            TemplateUsageLog log = new TemplateUsageLog();
-            log.setTemplateId(templateId);
-            log.setNpcId(npcId);
-            log.setSceneId(sceneId);
-            log.setUserId(userId);
-            log.setTokensUsed(tokensUsed);
-            log.setResponseTimeMs(responseTimeMs);
-            log.setCreatedAt(LocalDateTime.now());
+            Map<String, Object> logMap = new HashMap<>();
+            logMap.put("template_id", templateId);
+            logMap.put("npc_id", npcId);
+            logMap.put("scene_id", sceneId);
+            logMap.put("user_id", userId);
+            logMap.put("tokens_used", tokensUsed);
+            logMap.put("response_time_ms", responseTimeMs);
+            logMap.put("created_at", LocalDateTime.now());
 
-            usageMapper.insert(log);
+            usageMapper.insertRaw(logMap);
         } catch (Exception e) {
             log.error("记录模板使用日志失败：{}", e.getMessage());
         }
