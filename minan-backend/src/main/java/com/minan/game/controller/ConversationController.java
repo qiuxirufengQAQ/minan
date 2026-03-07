@@ -35,32 +35,29 @@ public class ConversationController {
     @PostMapping("/start")
     @ApiOperation("开始对话")
     public Response<Map<String, Object>> startConversation(
-        @RequestHeader(value = "satoken", required = false) String satoken,
         @RequestHeader(value = "Authorization", required = false) String authorization,
         @RequestBody @Validated StartConversationRequest request
     ) {
         try {
-            // 尝试从不同位置获取 token
-            String token = satoken;
-            if (token == null && authorization != null && authorization.startsWith("Bearer ")) {
+            // 从 Authorization header 提取 token
+            String token = null;
+            if (authorization != null && authorization.startsWith("Bearer ")) {
                 token = authorization.substring(7);
             }
             
-            log.info("Received token - satoken: {}, authorization: {}, extracted: {}", satoken, authorization, token);
-            
-            // 如果还是没有 token，返回错误
-            if (token == null) {
-                return Response.error("缺少 token");
-            }
-            
             // 手动验证 token
-            if (!StpUtil.stpLogic.getTokenValueByLoginId(StpUtil.getLoginIdDefault(), false).equals(token)) {
-                // Token 不匹配，尝试重新登录
-                log.warn("Token 不匹配，尝试使用接收到的 token");
+            if (token == null || token.isEmpty()) {
+                return Response.error("缺少 token，请先登录");
             }
             
-            // 使用当前登录用户 ID
-            Long currentUserId = StpUtil.getLoginIdAsLong();
+            // 通过 token 获取登录用户
+            Object loginId = StpUtil.getLoginIdByToken(token);
+            if (loginId == null) {
+                log.warn("无效的 token: {}", token.substring(0, Math.min(20, token.length())));
+                return Response.error("token 无效或已过期");
+            }
+            
+            Long currentUserId = Long.parseLong(loginId.toString());
             String sceneId = request.getSceneId();
             
             log.info("用户 {} 开始场景 {} 的对话", currentUserId, sceneId);
@@ -90,15 +87,30 @@ public class ConversationController {
     /**
      * 发送消息
      */
-    @PostMapping("/send")
+    @PostMapping("/send/{conversationId}")
     @ApiOperation("发送消息")
     public Response<Map<String, Object>> sendMessage(
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @PathVariable String conversationId,
         @RequestBody @Validated SendMessageRequest request
     ) {
         try {
-            // 验证当前用户是否有权操作此会话
-            Long currentUserId = StpUtil.getLoginIdAsLong();
+            // 从 Authorization header 提取 token
+            String token = null;
+            if (authorization != null && authorization.startsWith("Bearer ")) {
+                token = authorization.substring(7);
+            }
+            
+            if (token == null) {
+                return Response.error("缺少 token");
+            }
+            
+            Object loginIdObj = StpUtil.getLoginIdByToken(token);
+            if (loginIdObj == null) {
+                return Response.error("token 无效");
+            }
+            
+            Long currentUserId = Long.parseLong(loginIdObj.toString());
             
             // 检查会话归属
             if (!conversationService.isOwner(conversationId, currentUserId)) {
@@ -134,10 +146,26 @@ public class ConversationController {
     @GetMapping("/history/{conversationId}")
     @ApiOperation("获取对话历史")
     public Response<List<ConversationRecord>> getHistory(
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @PathVariable String conversationId
     ) {
         try {
-            Long currentUserId = StpUtil.getLoginIdAsLong();
+            // 从 Authorization header 提取 token
+            String token = null;
+            if (authorization != null && authorization.startsWith("Bearer ")) {
+                token = authorization.substring(7);
+            }
+            
+            if (token == null) {
+                return Response.error("缺少 token");
+            }
+            
+            Object loginIdObj = StpUtil.getLoginIdByToken(token);
+            if (loginIdObj == null) {
+                return Response.error("token 无效");
+            }
+            
+            Long currentUserId = Long.parseLong(loginIdObj.toString());
             
             // 检查会话归属
             if (!conversationService.isOwner(conversationId, currentUserId)) {
@@ -160,10 +188,26 @@ public class ConversationController {
     @PostMapping("/end/{conversationId}")
     @ApiOperation("结束对话")
     public Response<Void> endConversation(
+        @RequestHeader(value = "Authorization", required = false) String authorization,
         @PathVariable String conversationId
     ) {
         try {
-            Long currentUserId = StpUtil.getLoginIdAsLong();
+            // 从 Authorization header 提取 token
+            String token = null;
+            if (authorization != null && authorization.startsWith("Bearer ")) {
+                token = authorization.substring(7);
+            }
+            
+            if (token == null) {
+                return Response.error("缺少 token");
+            }
+            
+            Object loginIdObj = StpUtil.getLoginIdByToken(token);
+            if (loginIdObj == null) {
+                return Response.error("token 无效");
+            }
+            
+            Long currentUserId = Long.parseLong(loginIdObj.toString());
             
             // 检查会话归属
             if (!conversationService.isOwner(conversationId, currentUserId)) {

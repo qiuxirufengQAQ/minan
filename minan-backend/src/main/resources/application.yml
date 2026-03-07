@@ -70,3 +70,7 @@ sa-token:
   is-read-header: true
   # token 前缀（支持多个，逗号分隔）
   token-prefix: Bearer,satoken
+  # 是否从 request body 中读取 token
+  is-read-body: false
+  # 是否从 url 参数中读取 token
+  is-read-param: false
