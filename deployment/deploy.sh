@@ -4,8 +4,8 @@
 # 使用前请修改以下配置
 
 # 应用路径配置
-APP_ROOT="/var/www/minan"
-BACKEND_JAR="minan-game-1.0.0.jar"
+APP_ROOT="/var/www/lianai"
+BACKEND_JAR="lianai-game-1.0.0.jar"
 BACKEND_PORT=8080
 
 # 创建应用目录
@@ -53,7 +53,7 @@ Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=minan-backend
+SyslogIdentifier=lianai-backend
 
 [Install]
 WantedBy=multi-user.target
