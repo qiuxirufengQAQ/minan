@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.qrfeng.lianai.game.mapper.prompt.PromptTemplateUsageMapper">
+
+    <insert id="insert" parameterType="cn.qrfeng.lianai.game.model.prompt.TemplateUsageLog"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO prompt_template_usage (
+            template_id,
+            npc_id,
+            scene_id,
+            user_id,
+            tokens_used,
+            response_time_ms,
+            created_at
+        ) VALUES (
+            #{templateId},
+            #{npcId},
+            #{sceneId},
+            #{userId},
+            #{tokensUsed},
+            #{responseTimeMs},
+            NOW()
+        )
+    </insert>
+
+    <select id="selectUsageStats" resultType="java.util.HashMap">
+        SELECT 
+            COUNT(*) as total_calls,
+            AVG(tokens_used) as avg_tokens,
+            AVG(response_time_ms) as avg_response_time,
+            MIN(created_at) as first_used,
+            MAX(created_at) as last_used
+        FROM prompt_template_usage
+        WHERE template_id = #{templateId}
+          AND created_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+    </select>
+
+    <select id="selectLast7Days" resultType="java.util.HashMap">
+        SELECT 
+            DATE(created_at) as usage_date,
+            template_type,
+            COUNT(*) as call_count,
+            SUM(tokens_used) as total_tokens,
+            AVG(response_time_ms) as avg_response_time
+        FROM prompt_template_usage u
+        JOIN prompt_template t ON u.template_id = t.id
+        WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY DATE(u.created_at), t.template_type
+        ORDER BY usage_date DESC, t.template_type
+    </select>
+
+    <delete id="deleteBefore">
+        DELETE FROM prompt_template_usage
+        WHERE created_at &lt; #{before}
+    </delete>
+
+</mapper>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.qrfeng.lianai.game.mapper.prompt.PromptTemplateMapper">
+
+    <resultMap id="PromptTemplateResult" type="cn.qrfeng.lianai.game.model.prompt.PromptTemplate">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="template_type" property="templateType"/>
+        <result column="template_content" property="content"/>
+        <result column="variable_mapping" property="variableMapping" 
+                typeHandler="cn.qrfeng.lianai.game.handler.JsonMapTypeHandler"/>
+        <result column="version" property="version"/>
+        <result column="description" property="description"/>
+        <result column="is_active" property="active"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByTypeAndVersion" resultMap="PromptTemplateResult">
+        SELECT *
+        FROM prompt_template
+        WHERE template_type = #{templateType}
+          AND version = #{version}
+          AND is_active = 1
+        LIMIT 1
+    </select>
+
+    <select id="selectLatest" resultMap="PromptTemplateResult">
+        SELECT *
+        FROM prompt_template
+        WHERE template_type = #{templateType}
+          AND is_active = 1
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="cn.qrfeng.lianai.game.model.prompt.PromptTemplate"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO prompt_template (
+            name,
+            template_type,
+            template_content,
+            variable_mapping,
+            version,
+            description,
+            is_active,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{name},
+            #{templateType},
+            #{content},
+            #{variableMapping, typeHandler=cn.qrfeng.lianai.game.handler.JsonMapTypeHandler},
+            #{version},
+            #{description},
+            #{active},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="cn.qrfeng.lianai.game.model.prompt.PromptTemplate">
+        UPDATE prompt_template
+        SET name = #{name},
+            template_content = #{content},
+            variable_mapping = #{variableMapping, typeHandler=cn.qrfeng.lianai.game.handler.JsonMapTypeHandler},
+            version = #{version},
+            description = #{description},
+            is_active = #{active},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM prompt_template WHERE id = #{id}
+    </delete>
+
+    <select id="selectAll" resultMap="PromptTemplateResult">
+        SELECT *
+        FROM prompt_template
+        ORDER BY template_type, version DESC
+    </select>
+
+</mapper>
